@@ -56,12 +56,12 @@ Tạo hình ảnh trong một cuộc hội thoại bằng cách sử dụng mô 
       apiUrl="https://api.thucchien.ai/chat/completions"
       initialParameters={{
         apiKey: '<your_api_key>',
-        model: 'gemini-2.5-flash-image-preview',
+        model: 'gemini-3-pro-image-preview',
         prompt: 'A breathtaking scene where a majestic waterfall cascades down rugged cliffs, shimmering like silver threads under the warm sunlight. Lush greenery surrounds the falls—towering trees, vibrant flowers, and soft moss painting nature’s perfect canvas. Mist rises gently, forming a magical rainbow that arches across the sky, while birds soar gracefully above as if dancing to the music of nature. A dreamlike moment that blends serenity and beauty in one stunning view.',
       }}
       parameterControls={{
         apiKey: { type: 'input' },
-        model: { type: 'select', options: ['gemini-2.5-flash-image-preview'] },
+        model: { type: 'select', options: ['gemini-3-pro-image-preview','gemini-2.5-flash-image-preview',] },
         prompt: { type: 'textarea' },
       }}
       codeTemplates={{
