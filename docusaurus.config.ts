@@ -45,6 +45,8 @@ const config: Config = {
         docs: {
           sidebarPath: './sidebars.ts',
           routeBasePath: 'docs',
+          // Tạm ẩn vòng Bán Kết / Chung Kết; xoá dòng này để hiện lại.
+          exclude: ['round-3/**', 'round-4/**'],
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           // editUrl:
@@ -95,7 +97,7 @@ const config: Config = {
           sidebarId: 'tutorialSidebar',
           position: 'right',
           label: '📄 Tài liệu',
-          href: '/docs/round-3',
+          href: '/docs/round-2',
         },
         // {
         //   to: '/tools/suno-login-guidelines',
@@ -122,10 +124,6 @@ const config: Config = {
             {
               label: 'Tài liệu vòng Chung Khảo',
               to: '/docs/round-2',
-            },
-                        {
-              label: 'Tài liệu vòng Bán Kết',
-              to: '/docs/round-3',
             },
 
           ],
