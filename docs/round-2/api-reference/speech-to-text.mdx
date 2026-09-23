@@ -1,0 +1,92 @@
+---
+sidebar_position: 8
+title: Chuyển giọng nói thành văn bản
+description: Chuyển nội dung lời nói trong file âm thanh thành văn bản.
+hide_table_of_contents: true
+---
+
+import ApiReferenceLayout, { LeftColumn, RightColumn } from '@site/src/components/ApiReferenceLayout';
+import ApiParameter from '@site/src/components/ApiParameter';
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import CodeBlock from '@theme/CodeBlock';
+import Badge from '@site/src/components/Badge';
+
+# Chuyển giọng nói thành văn bản (Speech-to-Text)
+
+## <Badge method="POST" /> `/audio/transcriptions`
+
+Nhận một file âm thanh và trả về nội dung lời nói dưới dạng văn bản. Request gửi dạng `multipart/form-data`.
+:::info[Tham khảo]
+Chi tiết tham khảo tại [tài liệu LiteLLM API](https://docs.litellm.ai/docs/audio_transcription)
+:::
+
+<ApiReferenceLayout>
+  <LeftColumn>
+    ### Cấu trúc yêu cầu (Form Data)
+
+    <ApiParameter name="model" type="string" required>
+      ID của mô hình speech-to-text: `gemini-3.5-transcribe-preview`.
+    </ApiParameter>
+    <ApiParameter name="file" type="file" required isEnd>
+      File âm thanh cần chuyển thành văn bản, ví dụ `.mp3`.
+    </ApiParameter>
+
+    ---
+
+    ### Cấu trúc Phản hồi (Response Body)
+
+    <ApiParameter name="text" type="string">
+      Nội dung lời nói trong file âm thanh.
+    </ApiParameter>
+    <ApiParameter name="usage" type="object" isEnd>
+      Số token đã dùng (`input_tokens`, `output_tokens`, `total_tokens`).
+    </ApiParameter>
+
+  </LeftColumn>
+  <RightColumn>
+    <Tabs>
+      <TabItem value="curl" label="curl">
+        <CodeBlock language="bash">
+        {`curl https://api.thucchien.ai/audio/transcriptions \\
+  -H "Authorization: Bearer <your_api_key>" \\
+  -F model=gemini-3.5-transcribe-preview \\
+  -F file=@speech.mp3`}
+        </CodeBlock>
+      </TabItem>
+      <TabItem value="python-openai" label="Python (openai)">
+        <CodeBlock language="python">
+        {`from openai import OpenAI
+
+client = OpenAI(
+    api_key="<your_api_key>",
+    base_url="https://api.thucchien.ai"
+)
+
+with open("speech.mp3", "rb") as audio_file:
+    transcript = client.audio.transcriptions.create(
+        model="gemini-3.5-transcribe-preview",
+        file=audio_file,
+    )
+
+print(transcript.text)`}
+        </CodeBlock>
+      </TabItem>
+    </Tabs>
+
+    #### Ví dụ phản hồi
+
+    <CodeBlock language="json">
+    {`{
+  "text": "Xin chào các đội thi.",
+  "usage": {
+    "type": "tokens",
+    "input_tokens": 51,
+    "output_tokens": 6,
+    "total_tokens": 57
+  },
+  "task": "transcribe"
+}`}
+    </CodeBlock>
+  </RightColumn>
+</ApiReferenceLayout>
