@@ -1,9 +1,0 @@
-{
-  "label": "Sử dụng với Google GenAI",
-  "position": 4,
-  "link": {
-    "type": "generated-index",
-    "description": "Hướng dẫn sử dụng với Google Gemini/Vertex AI.",
-    "slug": "/using-google-genai"
-  }
-}

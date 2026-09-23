@@ -12,72 +12,61 @@ import Badge from '@site/src/components/Badge';
 
 # Sinh video (Bước 2/3): Kiểm tra trạng thái
 
-## <Badge method="GET" /> `/gemini/v1beta/{operation_name}`
+## <Badge method="GET" /> `/v1/videos/{video_id}`
 
-Sử dụng `operation_name` (`name` nhận được ở Bước 1) để hỏi API xem video đã được tạo xong chưa. Bạn cần lặp lại bước này cho đến khi nhận được trạng thái hoàn tất.
+Dùng `id` nhận được ở Bước 1 để hỏi API xem video đã được tạo xong chưa. Lặp lại bước này (ví dụ 10 giây một lần) cho đến khi `status` là `completed` hoặc `failed`.
 
 <ApiReferenceLayout>
   <LeftColumn>
     ### Tham số đường dẫn (Path Parameters)
-    <ApiParameter name="operation_name" type="string" required isEnd>
-      Tên của tác vụ cần kiểm tra. Ví dụ: `models/veo-3.0-generate-001/operations/idrk08ltkg0a`.
+    <ApiParameter name="video_id" type="string" required isEnd>
+      `id` của video nhận được ở [Bước 1](./video-generation-start). Ví dụ: `video_bGl0ZWxsbTpjdXN0b21fbGxtX3Byb3ZpZGVy...`.
     </ApiParameter>
 
     ---
 
     ### Cấu trúc Phản hồi (Response Body)
-    <ApiParameter name="name" type="string">
-      Tên đầy đủ của tác vụ.
+    <ApiParameter name="id" type="string">
+      ID của video.
     </ApiParameter>
-    <ApiParameter name="done" type="boolean">
-      Trạng thái của tác vụ. `true` nếu đã hoàn thành.
+    <ApiParameter name="status" type="string">
+      Trạng thái của tác vụ:
+      - `processing`: đang tạo
+      - `completed`: đã xong, chuyển sang [Bước 3](./video-generation-download) để tải video
+      - `failed`: tạo thất bại, xem chi tiết trong `error`
     </ApiParameter>
-    <ApiParameter name="response" type="object" isEnd>
-      Chứa kết quả khi `done` là `true`.
-    </ApiParameter>
-    <ApiParameter name="uri" type="string" indent={3} isEnd>
-      Đường dẫn URI đến file video đã được tạo. Bạn sẽ sử dụng `video_id` trích xuất từ URI này để tải video về ở Bước 3. Trong ví dụ: `https://generativelanguage.googleapis.com/v1beta/files/3j6svp4106e7:download?alt=media`, thì `video_id` là `3j6svp4106e7`.
+    <ApiParameter name="error" type="object" isEnd>
+      Thông tin lỗi khi `status` là `failed`.
     </ApiParameter>
 
   </LeftColumn>
   <RightColumn>
     <InteractiveApiRequest
       method="GET"
-      apiUrl="https://api.thucchien.ai/gemini/v1beta/{{operation_name}}"
+      apiUrl="https://api.thucchien.ai/v1/videos/{{video_id}}"
       initialParameters={{
         apiKey: '<your_api_key>',
-        operation_name: 'models/veo-3.0-generate-001/operations/idrk08ltkg0a',
+        video_id: '<video_id>',
       }}
-      headers={{
-        'x-goog-api-key': '<your_api_key>',
-      }}
+      headers={{}}
       parameterControls={{
         apiKey: { type: 'input' },
-        operation_name: { type: 'input' },
+        video_id: { type: 'input' },
       }}
       codeTemplates={{
         'curl': {
           language: 'bash',
-          template: `curl "https://api.thucchien.ai/gemini/v1beta/{{operation_name}}" \\
-  -H "x-goog-api-key: {{apiKey}}"`,
+          template: `curl "https://api.thucchien.ai/v1/videos/{{video_id}}" \\
+  -H "Authorization: Bearer {{apiKey}}"`,
         },
       }}
       buildBody={(params) => null}
       exampleResponse={{
-        "name": "models/veo-3.0-generate-preview/operations/idrk08ltkg0a",
-        "done": true,
-        "response": {
-            "@type": "type.googleapis.com/google.ai.generativelanguage.v1beta.PredictLongRunningResponse",
-            "generateVideoResponse": {
-                "generatedSamples": [
-                    {
-                        "video": {
-                            "uri": "https://generativelanguage.googleapis.com/v1beta/files/3j6svp4106e7:download?alt=media"
-                        }
-                    }
-                ]
-            }
-        }
+        "id": "video_bGl0ZWxsbTpjdXN0b21fbGxtX3Byb3ZpZGVy...",
+        "object": "video",
+        "status": "completed",
+        "created_at": 1790159271,
+        "model": "veo-3.1-lite-generate-001"
       }}
     />
   </RightColumn>

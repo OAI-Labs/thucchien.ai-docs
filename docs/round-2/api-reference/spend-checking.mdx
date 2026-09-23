@@ -159,10 +159,10 @@ Lấy thông tin chi tiết về API key và mức độ sử dụng hiện tạ
       Metadata tùy chỉnh được gán cho API key.
     </ApiParameter>
     <ApiParameter name="metadata.model_rpm_limit" type="object" indent={3}>
-      Giới hạn số lượng request per minute (RPM) cho từng mô hình cụ thể. Đây là giới hạn tần suất gọi API theo phút cho mỗi model. Xem thêm [Google AI Rate Limits](https://ai.google.dev/gemini-api/docs/rate-limits#tier-3) để biết chi tiết về các giới hạn.
+      Giới hạn số lượng request per minute (RPM) cho từng mô hình cụ thể. Đây là giới hạn tần suất gọi API theo phút cho mỗi model. Xem thêm [Vertex AI quotas](https://cloud.google.com/vertex-ai/generative-ai/docs/quotas) để biết chi tiết về các giới hạn.
     </ApiParameter>
     <ApiParameter name="metadata.model_tpm_limit" type="object" indent={3}>
-      Giới hạn số lượng token per minute (TPM) cho từng mô hình cụ thể. Đây là tổng số token (input) có thể xử lý trong một phút cho mỗi model. Xem thêm [Google AI Rate Limits](https://ai.google.dev/gemini-api/docs/rate-limits#tier-3) để biết chi tiết về quota và giới hạn token.
+      Giới hạn số lượng token per minute (TPM) cho từng mô hình cụ thể. Đây là tổng số token (input) có thể xử lý trong một phút cho mỗi model. Xem thêm [Vertex AI quotas](https://cloud.google.com/vertex-ai/generative-ai/docs/quotas) để biết chi tiết về quota và giới hạn token.
     </ApiParameter>
     <ApiParameter name="tpm_limit" type="number" indent={2}>
       Giới hạn tokens per minute chung cho API Key. `null` nếu không giới hạn.
@@ -297,28 +297,20 @@ fetch(url, {
     "max_parallel_requests": 200, // <- max concurrent requests per key
     "metadata": {
       "model_rpm_limit": {
-        "imagen-4": 20,
-        "gemini-2.5-pro": 2000,
-        "gemini-2.5-flash": 10000,
-        "veo-2.0-generate-001": 2,
-        "veo-2.0-generate-exp": 2,
-        "veo-3.0-generate-001": 10,
-        "gemini-2.5-flash-image": 5000,
-        "veo-2.0-generate-preview": 2,
-        "veo-3.1-generate-preview": 10,
-        "veo-3.0-fast-generate-001": 10,
-        "gemini-2.5-pro-preview-tts": 100,
-        "gemini-2.5-flash-preview-tts": 1000,
-        "veo-3.1-fast-generate-preview": 10,
-        "gemini-2.5-flash-image-preview": 5000
+        "gemini-3.8-flash": 2000,
+        "gemini-3.1-pro-preview": 200,
+        "gemini-3.1-flash-image": 100,
+        "gemini-3-pro-image": 50,
+        "gemini-3.1-flash-tts-preview": 100,
+        "veo-3.1-generate-001": 5,
+        "veo-3.1-fast-generate-001": 5,
+        "veo-3.1-lite-generate-001": 5
       },
       "model_tpm_limit": {
-        "gemini-2.5-pro": 8000000,
-        "gemini-2.5-flash": 8000000,
-        "gemini-2.5-flash-image": 5000000,
-        "gemini-2.5-pro-preview-tts": 1000000,
-        "gemini-2.5-flash-preview-tts": 1000000,
-        "gemini-2.5-flash-image-preview": 5000000
+        "gemini-3.8-flash": 8000000,
+        "gemini-3.1-pro-preview": 2000000,
+        "gemini-3.1-flash-image": 5000000,
+        "gemini-3.1-flash-tts-preview": 1000000
       }
     },
     "blocked": null,

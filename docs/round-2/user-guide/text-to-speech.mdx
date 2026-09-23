@@ -11,9 +11,10 @@ import SpeechOutput from '@site/static/audio/speech_output.mp3';
 
 Các mô hình Text-to-Speech (TTS) cho phép bạn chuyển đổi một đoạn văn bản thành file âm thanh có giọng nói tự nhiên.
 
-**Các model được hỗ trợ:**
-- `gemini-2.5-flash-preview-tts` (Google Gemini)
-- `gemini-2.5-pro-preview-tts` (Google Gemini)
+**Các model được hỗ trợ** (Google Vertex AI):
+- `gemini-3.1-flash-tts-preview`
+- `gemini-2.5-flash-preview-tts`
+- `gemini-2.5-pro-preview-tts`
 
 **Endpoint:** `POST /audio/speech`
 
@@ -112,5 +113,3 @@ print(f"File âm thanh đã được lưu tại: {speech_file_path}")`}
 Ngoài `model`, `input`, và `voice`, bạn có thể sử dụng thêm các tham số khác để tinh chỉnh giọng nói, tốc độ, và định dạng âm thanh đầu ra.
 
 Để biết danh sách đầy đủ các tham số và cách sử dụng, vui lòng tham khảo tài liệu chính thức tại đây: [Google Cloud Text-to-Speech Documentation](https://cloud.google.com/text-to-speech/docs/gemini-tts#examples)
-
-Ngoài ra, xem thêm nhiều lượt nói (multi-speaker) tại [đây](https://ai.google.dev/gemini-api/docs/speech-generation#multi-speaker)

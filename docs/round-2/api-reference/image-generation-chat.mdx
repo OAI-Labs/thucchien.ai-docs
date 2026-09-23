@@ -25,7 +25,7 @@ Tạo hình ảnh trong một cuộc hội thoại bằng cách sử dụng mô 
       Một danh sách các đối tượng message. Message cuối cùng nên chứa prompt để tạo ảnh.
     </ApiParameter>
     <ApiParameter name="model" type="string" required>
-      ID của mô hình đa phương thức sẽ sử dụng. Ví dụ: `gemini-2.5-flash-image-preview`.
+      ID của mô hình đa phương thức sẽ sử dụng. Ví dụ: `nano-banana-2` (= `gemini-3.1-flash-image`). Danh sách model xem ở [Sinh hình ảnh](./image-generation).
     </ApiParameter>
     <ApiParameter name="modalities" type="array" isEnd>
       Chỉ định `["image"]` để yêu cầu trả về dữ liệu hình ảnh.
@@ -56,12 +56,12 @@ Tạo hình ảnh trong một cuộc hội thoại bằng cách sử dụng mô 
       apiUrl="https://api.thucchien.ai/chat/completions"
       initialParameters={{
         apiKey: '<your_api_key>',
-        model: 'gemini-3-pro-image-preview',
+        model: 'nano-banana-2',
         prompt: 'A breathtaking scene where a majestic waterfall cascades down rugged cliffs, shimmering like silver threads under the warm sunlight. Lush greenery surrounds the falls—towering trees, vibrant flowers, and soft moss painting nature’s perfect canvas. Mist rises gently, forming a magical rainbow that arches across the sky, while birds soar gracefully above as if dancing to the music of nature. A dreamlike moment that blends serenity and beauty in one stunning view.',
       }}
       parameterControls={{
         apiKey: { type: 'input' },
-        model: { type: 'select', options: ['gemini-3-pro-image-preview','gemini-2.5-flash-image-preview',] },
+        model: { type: 'select', options: ['nano-banana-2', 'nano-banana-2-lite', 'nano-banana-pro', 'gemini-3.1-flash-image', 'gemini-3.1-flash-lite-image', 'gemini-3-pro-image', 'gemini-2.5-flash-image'] },
         prompt: { type: 'textarea' },
       }}
       codeTemplates={{
@@ -118,7 +118,7 @@ print("Image saved to generated_chat_image.png")`,
         "id": "chatcmpl-mock",
         "object": "chat.completion",
         "created": 1759806089,
-        "model": "gemini-2.5-flash-image-preview",
+        "model": "nano-banana-2",
         "choices": [
           {
             "index": 0,

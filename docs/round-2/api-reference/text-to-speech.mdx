@@ -21,9 +21,6 @@ Chuyển đổi một đoạn văn bản thành file âm thanh có giọng nói 
 Chi tiết tham khảo tại [tài liệu LiteLLM API](https://docs.litellm.ai/docs/text_to_speech)
 :::
 
-:::tip[Phương pháp thay thế]
-Ngoài endpoint này, bạn cũng có thể sử dụng mô hình text-to-speech thông qua endpoint [Google Gemini](./text-to-speech-gemini) với multi-speaker prompts.
-:::
 <ApiReferenceLayout>
   <LeftColumn>
     ### Cấu trúc yêu cầu (Request Body)
@@ -56,7 +53,7 @@ Ngoài endpoint này, bạn cũng có thể sử dụng mô hình text-to-speech
       }}
       parameterControls={{
         apiKey: { type: 'input' },
-        model: { type: 'select', options: ['gemini-2.5-flash-preview-tts', 'gemini-2.5-pro-preview-tts'] },
+        model: { type: 'select', options: ['gemini-3.1-flash-tts-preview', 'gemini-2.5-flash-preview-tts', 'gemini-2.5-pro-preview-tts'] },
         input: { type: 'textarea' },
         voice: { type: 'select', options: ['Zephyr', 'Puck', 'Charon', 'Kore', 'Fenrir', 'Leda', 'Orus', 'Aoede', 'Callirrhoe', 'Autonoe', 'Enceladus', 'Iapetus', 'Umbriel', 'Algieba', 'Despina', 'Erinome', 'Algenib', 'Rasalgethi', 'Laomedeia', 'Achernar', 'Alnilam', 'Schedar', 'Gacrux', 'Pulcherrima', 'Achird', 'Zubenelgenubi', 'Vindemiatrix', 'Sadachbia', 'Sadaltager', 'Sulafat'] },
       }}
