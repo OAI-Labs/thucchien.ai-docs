@@ -1,0 +1,152 @@
+---
+sidebar_position: 9
+---
+
+# Model OpenAI và DeepSeek
+
+import CodeBlock from '@theme/CodeBlock';
+
+Ngoài Gemini, gateway còn cung cấp model của **OpenAI** và **DeepSeek**. Cách gọi y hệt các trang trước: cùng `base_url="https://api.thucchien.ai"`, cùng API key, chỉ cần đổi `model`.
+
+## Danh sách model
+
+| Tác vụ | Model | Endpoint |
+|---|---|---|
+| Sinh văn bản (reasoning) | `gpt-6-astra`, `gpt-6-sol`, `gpt-6-luna`, `gpt-5.6-sol`, `gpt-5.6-terra`, `gpt-5.6-luna`, `gpt-5.5`, `gpt-5.4`, `gpt-5.4-mini`, `gpt-5.4-nano`, `gpt-5`, `gpt-5-mini`, `gpt-5-nano`, `o3`, `o4-mini` | `/chat/completions`, `/responses` |
+| Sinh văn bản (không reasoning) | `gpt-4.1`, `gpt-4.1-mini`, `gpt-4.1-nano`, `gpt-4o`, `gpt-4o-mini` | `/chat/completions` |
+| Sinh văn bản (DeepSeek) | `deepseek-flash`, `deepseek-v4-pro` | `/chat/completions` |
+| Tạo ảnh | `gpt-image-2`, `gpt-image-2.5-flare`, `gpt-image-2.5-sunburst`, `gpt-image-1-mini` | `/images/generations` |
+| Text-to-speech | `gpt-4o-mini-tts`, `tts-1` | `/audio/speech` |
+| Speech-to-text | `gpt-4o-transcribe`, `gpt-4o-mini-transcribe`, `gpt-transcribe`, `whisper-1` | `/audio/transcriptions` |
+| Embedding | `text-embedding-3-small` (1536 chiều), `text-embedding-3-large` (3072 chiều) | `/embeddings` |
+| Kiểm duyệt nội dung | `omni-moderation-latest` (miễn phí) | `/moderations` |
+
+Giá từng model xem ở [Bảng giá model](./pricing.mdx).
+
+## OpenAI
+
+### Model reasoning (`gpt-5*`, `gpt-6*`, `o3`, `o4-mini`)
+
+Model reasoning "suy nghĩ" trước khi trả lời. Token suy nghĩ không hiển thị nhưng **vẫn tính tiền như output** và **vẫn tính vào giới hạn độ dài**.
+
+- **Đừng đặt `max_tokens` / `max_completion_tokens` quá nhỏ.** Ví dụ với `max_tokens=50`, `gpt-5-nano` dùng hết 50 token để suy nghĩ và trả về `content` **rỗng**. Nên để trống, hoặc đặt từ vài nghìn trở lên.
+- **Điều chỉnh mức suy nghĩ bằng `reasoning_effort`**: `minimal`, `low`, `medium` (mặc định) hoặc `high`. Với câu hỏi đơn giản, `minimal` giảm token suy nghĩ xuống gần 0, vừa nhanh vừa rẻ hơn khoảng 10 lần.
+- **`temperature`, `top_p` không có tác dụng.** Gateway tự bỏ các tham số này thay vì báo lỗi.
+
+<CodeBlock language="python">
+{`from openai import OpenAI
+
+client = OpenAI(api_key="<your_api_key>", base_url="https://api.thucchien.ai")
+
+response = client.chat.completions.create(
+    model="gpt-5-mini",
+    messages=[{"role": "user", "content": "Tóm tắt luật chơi cờ tướng trong 3 câu."}],
+    reasoning_effort="low",
+)
+
+print(response.choices[0].message.content)
+print(response.usage.completion_tokens_details.reasoning_tokens, "token suy nghĩ")`}
+</CodeBlock>
+
+Model `gpt-4.1*` và `gpt-4o*` không reasoning, nên dùng `temperature` và `max_tokens` như bình thường.
+
+### Tạo ảnh (`gpt-image-*`)
+
+Gọi `/images/generations` như [trang Tạo ảnh](./image-generation.mdx). Khác với Nano Banana:
+
+- Chọn kích thước bằng `size` (`1024x1024`, `1536x1024`, `1024x1536`) và chất lượng bằng `quality` (`low`, `medium`, `high`). `quality="low"` rẻ nhất.
+- Giá tính theo image token, nên phụ thuộc `size` và `quality`. Ảnh `gpt-image-1-mini` 1024×1024 `low` tốn khoảng $0.002.
+- Ảnh trả về dạng base64 trong `data[0].b64_json`.
+
+<CodeBlock language="python">
+{`import base64
+from openai import OpenAI
+
+client = OpenAI(api_key="<your_api_key>", base_url="https://api.thucchien.ai")
+
+result = client.images.generate(
+    model="gpt-image-1-mini",
+    prompt="Một chú mèo đội nón lá, phong cách tranh Đông Hồ",
+    size="1024x1024",
+    quality="low",
+)
+
+with open("cat.png", "wb") as f:
+    f.write(base64.b64decode(result.data[0].b64_json))`}
+</CodeBlock>
+
+### Âm thanh
+
+- **Text-to-speech**: `gpt-4o-mini-tts` và `tts-1` dùng giọng của OpenAI (`alloy`, `echo`, `fable`, `onyx`, `nova`, `shimmer`…), không dùng giọng Gemini như `Kore`. File trả về là `mp3`.
+- **Speech-to-text**: gọi giống [trang Speech-to-Text](./speech-to-text.mdx). Riêng `gpt-transcribe` **bắt buộc** gửi `response_format="json"`, nếu không sẽ lỗi 400.
+
+<CodeBlock language="python">
+{`with open("speech.mp3", "rb") as audio_file:
+    transcript = client.audio.transcriptions.create(
+        model="gpt-transcribe",
+        file=audio_file,
+        response_format="json",
+    )
+print(transcript.text)`}
+</CodeBlock>
+
+### Embedding và kiểm duyệt
+
+<CodeBlock language="python">
+{`emb = client.embeddings.create(model="text-embedding-3-small", input=["xin chào", "tạm biệt"])
+print(len(emb.data[0].embedding))  # 1536
+
+mod = client.moderations.create(model="omni-moderation-latest", input="nội dung cần kiểm tra")
+print(mod.results[0].flagged)`}
+</CodeBlock>
+
+## DeepSeek
+
+| Model | Đặc điểm |
+|---|---|
+| `deepseek-flash` | Nhanh, rẻ. Hợp với phần lớn tác vụ văn bản. |
+| `deepseek-v4-pro` | Mạnh hơn, giá gấp khoảng 4 lần. |
+
+**Chế độ suy nghĩ (thinking) bật sẵn.** Phần suy nghĩ trả về riêng trong `message.reasoning_content`, còn câu trả lời vẫn nằm trong `message.content`. Token suy nghĩ tính tiền như output.
+
+**Tắt thinking** khi không cần suy luận nhiều (phân loại, trích xuất, viết lại…). Chi phí giảm khoảng 10 lần:
+
+<CodeBlock language="python">
+{`from openai import OpenAI
+
+client = OpenAI(api_key="<your_api_key>", base_url="https://api.thucchien.ai")
+
+response = client.chat.completions.create(
+    model="deepseek-flash",
+    messages=[{"role": "user", "content": "Phân loại cảm xúc: 'Đồ ăn ngon, phục vụ chậm'"}],
+    extra_body={"thinking": {"type": "disabled"}},  # bỏ dòng này để bật lại thinking
+)
+
+print(response.choices[0].message.content)`}
+</CodeBlock>
+
+Khi bật thinking, đọc phần suy nghĩ như sau:
+
+<CodeBlock language="python">
+{`msg = response.choices[0].message
+print(getattr(msg, "reasoning_content", None))  # quá trình suy nghĩ
+print(msg.content)                              # câu trả lời`}
+</CodeBlock>
+
+Lưu ý khác:
+
+- **JSON mode**: `response_format={"type": "json_object"}` hoạt động. Trong prompt phải có chữ "JSON" và mô tả cấu trúc mong muốn.
+- **Không hỗ trợ** ảnh đầu vào, tạo ảnh, âm thanh hay tìm kiếm web. Với các tác vụ này, hãy dùng Gemini hoặc OpenAI.
+- DeepSeek giới hạn theo **số request đồng thời** trên toàn gateway, không theo từng đội. Đừng bắn hàng trăm request song song cùng lúc.
+
+## Lưu ý chung
+
+- Model OpenAI và DeepSeek dùng chung một tài khoản cho tất cả các đội. Nếu nhận lỗi `429`, hãy chờ vài giây rồi thử lại (SDK `openai` tự thử lại 2 lần).
+- Cần thông tin mới trên Internet? Xem [Tìm kiếm web](./google-search-grounding.mdx).
+
+## Tham khảo
+
+- [Reasoning models — OpenAI](https://platform.openai.com/docs/guides/reasoning)
+- [Web search — OpenAI](https://platform.openai.com/docs/guides/tools-web-search)
+- [Tài liệu API DeepSeek](https://api-docs.deepseek.com/)
+- [Thinking mode — DeepSeek](https://api-docs.deepseek.com/guides/thinking_mode)
