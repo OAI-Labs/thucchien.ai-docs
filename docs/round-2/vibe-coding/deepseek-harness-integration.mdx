@@ -1,0 +1,110 @@
+---
+sidebar_position: 5
+---
+
+# Tích hợp với DeepSeek Harness
+
+import CodeBlock from '@theme/CodeBlock';
+import DshModels from '@site/static/img/vibe-coding/dsh-models.png';
+import DshAddProvider from '@site/static/img/vibe-coding/dsh-add-provider.png';
+import DshModelPicker from '@site/static/img/vibe-coding/dsh-model-picker.png';
+import DshChat from '@site/static/img/vibe-coding/dsh-chat.png';
+
+[DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (`dsh`) là coding agent mã nguồn mở của DeepSeek, chạy bằng giao diện web trên máy của bạn. Harness cho phép thêm **Custom model API**, nên kết nối được với gateway và dùng mọi model văn bản trên đó, không chỉ DeepSeek.
+
+:::info[Bản developer preview]
+DeepSeek Harness đang ở giai đoạn developer preview, giao diện và cấu hình có thể thay đổi giữa các phiên bản. Hướng dẫn này được kiểm tra với `dsh 0.2.0-rc.2`. Nếu màn hình khác hướng dẫn, xem [tài liệu gốc](https://github.com/deepseek-ai/deepseek-harness/blob/master/docs/user/guide/providers.md).
+:::
+
+## 1. Khởi động
+
+Cần **Node.js 22.19 trở lên** (bản cũ hơn vẫn chạy nhưng báo cảnh báo).
+
+<CodeBlock language="bash">
+{`cd du-an-cua-ban
+npx @deepseek-ai/dsh web`}
+</CodeBlock>
+
+Terminal in ra địa chỉ dạng `http://127.0.0.1:3080/?token=...` và tự mở trình duyệt. Địa chỉ này **có kèm token phiên**: mở thiếu token sẽ bị lỗi `401`. Đừng chia sẻ link này hay chụp màn hình terminal có token.
+
+- Cổng 3080 đang bận thì chạy `npx @deepseek-ai/dsh web --port 3091`.
+- Lần đầu mở sẽ có hộp **Preview Notice**, bấm **Continue**.
+
+## 2. Thêm gateway làm provider
+
+1. Bấm **Settings** (góc dưới trái) → **Models** → **Add model provider**.
+2. Chuyển sang tab **Custom model API** và điền:
+
+| Trường | Giá trị |
+|---|---|
+| Provider ID | `thucchien` (chữ thường, không đổi được về sau) |
+| Display name | `AI Thực Chiến` |
+| Base URL | `https://api.thucchien.ai/v1` |
+| API protocol | **OpenAI Responses** |
+| API key | key của đội |
+
+3. Ở mục **Models**, bấm **Fetch available models** để lấy danh sách từ gateway, hoặc bấm **Add model** rồi gõ tên model (ví dụ `gpt-6-luna`, `deepseek-flash`, `gemini-3.5-flash`).
+4. Bấm **Create provider**.
+
+<figure style={{ textAlign: 'center' }}>
+  <img src={DshAddProvider} alt="Form Custom model API của DeepSeek Harness" />
+  <figcaption>Form <b>Custom model API</b> đã điền base URL và giao thức OpenAI Responses. Ảnh dùng ID <code>aithucchien</code> và để trống ô API key; bạn dùng ID <code>thucchien</code> và điền key của đội.</figcaption>
+</figure>
+
+Chọn **OpenAI Responses** vì với giao thức này, cả model OpenAI, Gemini và DeepSeek đều gọi tool được qua gateway. Nếu chọn OpenAI Chat Completions, model `gpt-6-*` sẽ báo lỗi 400 khi agent gọi tool.
+
+Provider mới hiện trong danh sách với nhãn **Custom**. Chấm xanh nghĩa là đã có key.
+
+<figure style={{ textAlign: 'center' }}>
+  <img src={DshModels} alt="Danh sách provider trong Settings > Models" />
+  <figcaption>Provider <code>thucchien</code> đã kết nối (chấm xanh). Provider DeepSeek mặc định chấm đỏ vì chưa có key, không ảnh hưởng.</figcaption>
+</figure>
+
+Key được lưu trong `$DSH_HOME/.credentials.yaml` (mặc định `~/.dsh`), không nằm trong file cấu hình.
+
+## 3. Chọn model và bắt đầu
+
+Ở khung chat, bấm vào tên model (góc dưới phải) → **Model**, chọn model trong nhóm `thucchien`. Model được chọn sẽ thành mặc định cho các phiên sau.
+
+<figure style={{ textAlign: 'center' }}>
+  <img src={DshModelPicker} alt="Chọn model của gateway trong DeepSeek Harness" />
+  <figcaption>Các model của gateway nằm trong nhóm <code>thucchien</code>.</figcaption>
+</figure>
+
+<figure style={{ textAlign: 'center' }}>
+  <img src={DshChat} alt="Phiên chat DeepSeek Harness dùng deepseek-flash qua gateway" />
+  <figcaption>Một phiên chat với <code>deepseek-flash</code> qua gateway. Thanh dưới cùng hiện số token đã dùng.</figcaption>
+</figure>
+
+## Cấu hình bằng file (tuỳ chọn)
+
+Thay vì nhập key vào giao diện, bạn có thể khai báo provider trong `$DSH_HOME/profiles/web/cordis.patch.yml` và để Harness đọc key từ biến môi trường. Cách này cũng bật được menu **Effort** (mức suy nghĩ) cho model OpenAI:
+
+<CodeBlock language="yaml" title="$DSH_HOME/profiles/web/cordis.patch.yml">
+{`- id: llm-pi-ai
+  config:
+    providers:
+      thucchien:
+        apiKeyEnv: THUCCHIEN_API_KEY
+        api: openai-responses
+        baseURL: https://api.thucchien.ai/v1
+        models:
+          - id: gpt-6-luna
+            reasoningEfforts:
+              low: low
+              medium: medium
+              high: high
+          - id: deepseek-flash
+          - id: gemini-3.5-flash`}
+</CodeBlock>
+
+Đặt `THUCCHIEN_API_KEY` trong terminal trước khi chạy `npx @deepseek-ai/dsh web`. Khi sửa file này, giữ nguyên các mục khác đang có (Harness tự ghi thêm vài mục như `ui-settings-general`).
+
+## Xử lý lỗi thường gặp
+
+- **`401` khi mở trang**: thiếu `?token=...` trong địa chỉ. Mở đúng link terminal in ra.
+- **`EADDRINUSE`**: cổng 3080 đang bận, chạy lại với `--port`.
+- **`A provider already uses this ID`**: đã có provider cùng ID (ví dụ khai báo bằng file). Sửa provider cũ bằng nút **Edit** thay vì tạo mới.
+- **`MISSING_CREDENTIAL`**: chưa nhập key cho provider, hoặc biến môi trường trong `apiKeyEnv` chưa được đặt.
+- **`UNKNOWN_MODEL`**: model chưa có trong danh sách của provider. Thêm tay tên model (xem [Bảng giá model](../user-guide/pricing.mdx)).
+- **`429 Budget has been exceeded`**: đội đã dùng hết budget.

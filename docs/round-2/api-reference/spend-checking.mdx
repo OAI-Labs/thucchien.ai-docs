@@ -10,15 +10,33 @@ import InteractiveApiRequest from '@site/src/components/InteractiveApiRequest';
 import ApiParameter from '@site/src/components/ApiParameter';
 import Badge from '@site/src/components/Badge';
 import styles from '@site/src/components/InteractiveApiRequest.module.css';
+import { useState, useEffect } from 'react';
 
-export const KeyInfoPreview = ({ data }) => {
+export const KeyInfoPreview = ({ data, apiKey }) => {
   const info = data?.info;
+  const teamId = info?.team_id;
+  const [team, setTeam] = useState(null);
+
+  // Budget, RPM, TPM được đặt ở team (dùng chung cho mọi key của đội), nên lấy thêm /team/info.
+  useEffect(() => {
+    setTeam(null);
+    if (!teamId || !apiKey) return;
+    fetch(`https://api.thucchien.ai/team/info?team_id=${encodeURIComponent(teamId)}`, {
+      headers: { accept: 'application/json', Authorization: `Bearer ${apiKey}` },
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json) => setTeam(json?.team_info || null))
+      .catch(() => setTeam(null));
+  }, [teamId, apiKey]);
+
   if (!info) return null;
 
-  const spend = info.spend || 0;
-  const maxBudget = info.max_budget;
+  const spend = team?.spend ?? info.spend ?? 0;
+  const maxBudget = team?.max_budget ?? info.max_budget;
+  const tpmLimit = team?.tpm_limit ?? info.tpm_limit;
+  const rpmLimit = team?.rpm_limit ?? info.rpm_limit;
   const budgetPercentage = maxBudget ? Math.min((spend / maxBudget) * 100, 100) : 0;
-  
+
   const getProgressBarColor = () => {
     if (!maxBudget) return styles.progressBarSuccess;
     if (budgetPercentage >= 90) return styles.progressBarDanger;
@@ -29,7 +47,7 @@ export const KeyInfoPreview = ({ data }) => {
   return (
     <div className={styles.keyInfoPreview}>
       <div className={styles.keyInfoTitle}>
-        📊 Budget Usage
+        📊 Budget Usage{team ? ` (team ${team.team_id})` : ''}
       </div>
       
       {/* Budget Progress Section */}
@@ -86,13 +104,13 @@ export const KeyInfoPreview = ({ data }) => {
         <div className={styles.infoRow}>
           <span className={styles.infoLabel}>TPM Limit:</span>
           <span className={styles.infoValue}>
-            {info.tpm_limit ? info.tpm_limit.toLocaleString() : 'Unlimited'}
+            {tpmLimit ? tpmLimit.toLocaleString() : 'Unlimited'}
           </span>
         </div>
         <div className={styles.infoRow}>
           <span className={styles.infoLabel}>RPM Limit:</span>
           <span className={styles.infoValue}>
-            {info.rpm_limit ? info.rpm_limit.toLocaleString() : 'Unlimited'}
+            {rpmLimit ? rpmLimit.toLocaleString() : 'Unlimited'}
           </span>
         </div>
         <div className={styles.infoRow}>
@@ -111,6 +129,18 @@ export const KeyInfoPreview = ({ data }) => {
 ## <Badge method="GET" /> `/key/info`
 
 Lấy thông tin chi tiết về API key và mức độ sử dụng hiện tại.
+
+:::info Budget tính theo đội
+Budget, RPM và TPM được đặt cho **đội** (team), dùng chung cho mọi key của đội. Vì vậy trong `/key/info`, `max_budget`, `rpm_limit`, `tpm_limit` là `null` và `spend` chỉ là phần chi tiêu của riêng key đó.
+
+Để xem tổng chi tiêu và budget của đội, gọi `/team/info` với `team_id` lấy từ `/key/info` (chỉ xem được đội của chính mình). Khung kết quả bên phải đã tự gọi thêm endpoint này.
+
+```bash
+curl 'https://api.thucchien.ai/team/info?team_id=<team_id>'   -H 'Authorization: Bearer <your_api_key>'
+```
+
+Trong phản hồi, xem `team_info.spend`, `team_info.max_budget`, `team_info.rpm_limit`, `team_info.tpm_limit`.
+:::
 
 <ApiReferenceLayout>
   <LeftColumn>
@@ -150,7 +180,7 @@ Lấy thông tin chi tiết về API key và mức độ sử dụng hiện tạ
       Tổng số tiền đã chi tiêu bằng API key này (tính bằng USD).
     </ApiParameter>
     <ApiParameter name="max_budget" type="number" indent={2}>
-      Ngân sách tối đa được phép cho API key này. `null` nếu không giới hạn.
+      Ngân sách tối đa riêng của API key này. `null` nếu key không có giới hạn riêng (budget đặt ở đội, xem `/team/info`).
     </ApiParameter>
         <ApiParameter name="max_parallel_requests" type="number" indent={2}>
       Số lượng yêu cầu đồng thời tối đa được phép cho API key này. Giới hạn này kiểm soát số lượng request có thể xử lý song song cùng một lúc. Trường hợp vượt quá giới hạn này, các yêu cầu bổ sung sẽ bị từ chối trả lỗi 429 (Too Many Requests).
@@ -159,10 +189,10 @@ Lấy thông tin chi tiết về API key và mức độ sử dụng hiện tạ
       Metadata tùy chỉnh được gán cho API key.
     </ApiParameter>
     <ApiParameter name="metadata.model_rpm_limit" type="object" indent={3}>
-      Giới hạn số lượng request per minute (RPM) cho từng mô hình cụ thể. Đây là giới hạn tần suất gọi API theo phút cho mỗi model. Xem thêm [Vertex AI quotas](https://cloud.google.com/vertex-ai/generative-ai/docs/quotas) để biết chi tiết về các giới hạn.
+      Giới hạn số lượng request per minute (RPM) cho từng mô hình cụ thể. Đây là giới hạn tần suất gọi API theo phút cho mỗi model. Xem thêm [Agent Platform quotas](https://cloud.google.com/vertex-ai/generative-ai/docs/quotas) để biết chi tiết về các giới hạn.
     </ApiParameter>
     <ApiParameter name="metadata.model_tpm_limit" type="object" indent={3}>
-      Giới hạn số lượng token per minute (TPM) cho từng mô hình cụ thể. Đây là tổng số token (input) có thể xử lý trong một phút cho mỗi model. Xem thêm [Vertex AI quotas](https://cloud.google.com/vertex-ai/generative-ai/docs/quotas) để biết chi tiết về quota và giới hạn token.
+      Giới hạn số lượng token per minute (TPM) cho từng mô hình cụ thể. Đây là tổng số token (input) có thể xử lý trong một phút cho mỗi model. Xem thêm [Agent Platform quotas](https://cloud.google.com/vertex-ai/generative-ai/docs/quotas) để biết chi tiết về quota và giới hạn token.
     </ApiParameter>
     <ApiParameter name="tpm_limit" type="number" indent={2}>
       Giới hạn tokens per minute chung cho API Key. `null` nếu không giới hạn.
@@ -218,7 +248,7 @@ Lấy thông tin chi tiết về API key và mức độ sử dụng hiện tạ
       parameterControls={{
         apiKey: { type: 'input' },
       }}
-      customPreview={(response) => <KeyInfoPreview data={response} />}
+      customPreview={(response, params) => <KeyInfoPreview data={response} apiKey={params?.apiKey} />}
       codeTemplates={{
         'curl': {
           language: 'bash',

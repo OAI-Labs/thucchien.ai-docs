@@ -1,0 +1,100 @@
+---
+sidebar_position: 8
+---
+
+# Tích hợp với OpenCode
+
+import CodeBlock from '@theme/CodeBlock';
+import OpencodeTui from '@site/static/img/vibe-coding/opencode-tui.png';
+
+[OpenCode](https://opencode.ai/docs/providers/) là coding agent mã nguồn mở chạy trong terminal. OpenCode cho khai báo provider tuỳ chỉnh bằng file JSON, nên dùng được **mọi model văn bản** của gateway. Hướng dẫn này được kiểm tra với `opencode 1.18.33`.
+
+## 1. Cài đặt
+
+<CodeBlock language="bash">
+{`npm install -g opencode-ai`}
+</CodeBlock>
+
+Kiểm tra bằng `opencode --version`.
+
+## 2. Đặt API key vào biến môi trường
+
+<CodeBlock language="bash">
+{`# macOS / Linux: thêm vào ~/.zshrc hoặc ~/.bashrc
+export THUCCHIEN_API_KEY="<your_api_key>"`}
+</CodeBlock>
+
+<CodeBlock language="powershell">
+{`# Windows PowerShell (mở lại terminal sau khi chạy)
+setx THUCCHIEN_API_KEY "<your_api_key>"`}
+</CodeBlock>
+
+## 3. Khai báo gateway
+
+Tạo file `~/.config/opencode/opencode.json` (Windows: `%USERPROFILE%\.config\opencode\opencode.json`). Muốn cấu hình riêng cho một dự án, đặt file `opencode.json` ở thư mục gốc dự án.
+
+<CodeBlock language="json" title="~/.config/opencode/opencode.json">
+{`{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "thucchien/deepseek-flash",
+  "provider": {
+    "thucchien": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "AI Thuc Chien",
+      "options": {
+        "baseURL": "https://api.thucchien.ai/v1",
+        "apiKey": "{env:THUCCHIEN_API_KEY}"
+      },
+      "models": {
+        "deepseek-flash": { "name": "DeepSeek Flash" },
+        "deepseek-v4-pro": { "name": "DeepSeek V4 Pro" },
+        "gemini-3.5-flash": { "name": "Gemini 3.5 Flash" }
+      }
+    },
+    "thucchien-openai": {
+      "npm": "@ai-sdk/openai",
+      "name": "AI Thuc Chien (OpenAI)",
+      "options": {
+        "baseURL": "https://api.thucchien.ai/v1",
+        "apiKey": "{env:THUCCHIEN_API_KEY}"
+      },
+      "models": {
+        "gpt-6-luna": { "name": "GPT-6 Luna" },
+        "gpt-6.1-sol": { "name": "GPT-6.1 Sol" }
+      }
+    }
+  }
+}`}
+</CodeBlock>
+
+Vì sao có **hai** provider:
+
+- `thucchien` dùng gói `@ai-sdk/openai-compatible`, gọi `/chat/completions`. Hợp với model Gemini và DeepSeek.
+- `thucchien-openai` dùng gói `@ai-sdk/openai`, gọi `/responses`. Model `gpt-6-*` phải đi đường này: qua `/chat/completions` chúng **không gọi được tool** (lỗi 400).
+
+`{env:THUCCHIEN_API_KEY}` bảo OpenCode đọc key từ biến môi trường, nên file cấu hình không chứa key và có thể commit vào repo. Thêm model khác của gateway bằng cách thêm dòng vào mục `models` (tên xem ở [Bảng giá model](../user-guide/pricing.mdx)).
+
+## 4. Chạy thử
+
+<CodeBlock language="bash">
+{`cd du-an-cua-ban
+opencode`}
+</CodeBlock>
+
+Thanh dưới cùng hiện tên model và provider **AI Thuc Chien**, nghĩa là OpenCode đang đi qua gateway.
+
+<figure style={{ textAlign: 'center' }}>
+  <img src={OpencodeTui} alt="OpenCode dùng DeepSeek Flash qua gateway, hiện diff sửa todo.py" />
+  <figcaption>OpenCode (chế độ <b>Build</b>) dùng DeepSeek Flash qua gateway, hiện diff thêm lệnh <code>done</code> vào <code>todo.py</code>.</figcaption>
+</figure>
+
+- Đổi model: gõ `/models` rồi chọn model trong nhóm **AI Thuc Chien** hoặc **AI Thuc Chien (OpenAI)**.
+- Nhấn `Tab` để chuyển giữa chế độ **Build** (được sửa file) và **Plan** (chỉ đọc và lên kế hoạch).
+- Chạy một lệnh không cần giao diện: `opencode run "Tóm tắt README"`.
+
+## Xử lý lỗi thường gặp
+
+- **`401`**: sai key, hoặc chưa mở lại terminal sau khi đặt `THUCCHIEN_API_KEY`.
+- **`400 Function tools with reasoning_effort are not supported`**: model `gpt-6-*` đang nằm trong provider `thucchien`. Chuyển nó sang `thucchien-openai`.
+- **Model không có trong `/models`**: kiểm tra file JSON hợp lệ (không thừa dấu phẩy) và đúng đường dẫn.
+- **`429 Budget has been exceeded`**: đội đã dùng hết budget. Xem [Kiểm tra chi tiêu](../api-reference/spend-checking.mdx).

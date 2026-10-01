@@ -1,33 +1,92 @@
 ---
-sidebar_position: 4
+sidebar_position: 10
 ---
 
 # Các phương pháp tốt nhất (Best Practices)
 
-VibeCoding là một công cụ mạnh mẽ, nhưng để khai thác tối đa tiềm năng của nó, bạn cần áp dụng một số chiến lược và phương pháp làm việc hiệu quả.
+import CodeBlock from '@theme/CodeBlock';
 
-## 1. Kỹ thuật Prompting hiệu quả
+Coding agent (Codex, OpenCode, Gemini CLI, Hermes, ...) không chỉ sinh code mà còn tự đọc file, chạy lệnh và sửa dự án. Các nguyên tắc dưới đây giúp agent làm đúng việc, và giúp đội không tốn budget vô ích.
 
-Chất lượng của mã nguồn do AI tạo ra phụ thuộc rất nhiều vào chất lượng của yêu cầu (prompt) bạn đưa ra.
+## 1. Viết file hướng dẫn cho agent
 
--   **Rõ ràng và cụ thể:** Thay vì nói *"Làm một trang web"*, hãy nói *"Tạo một trang landing page cho sản phẩm XYZ bằng HTML và Tailwind CSS, bao gồm một header, một khu vực giới thiệu tính năng, và một footer."*
--   **Cung cấp ngữ cảnh:** Nếu bạn đang thêm code vào một dự án có sẵn, hãy cung cấp cho AI một đoạn code mẫu hoặc mô tả cấu trúc hiện tại.
--   **Chia nhỏ nhiệm vụ:** Đối với các tác vụ phức tạp, hãy chia chúng thành các yêu cầu nhỏ hơn. Ví dụ, thay vì yêu cầu tạo cả một ứng dụng, hãy bắt đầu bằng việc yêu cầu tạo cấu trúc thư mục, sau đó là từng component một.
+Đặt một file hướng dẫn ở thư mục gốc dự án. Agent đọc file này ở đầu mỗi phiên, nên bạn không phải nhắc lại cùng một điều.
 
-## 2. Phát triển lặp lại (Iterative Development)
+| Công cụ | Tên file |
+|---|---|
+| Codex, OpenCode, Hermes, Cursor và nhiều công cụ khác | `AGENTS.md` |
+| Gemini CLI, Antigravity CLI | `GEMINI.md` |
 
-Đừng mong đợi AI sẽ tạo ra một sản phẩm hoàn hảo ngay từ lần đầu tiên. Hãy làm việc với nó một cách lặp lại.
+Nội dung nên ngắn, chỉ ghi những gì agent không tự suy ra được:
 
--   **Bắt đầu đơn giản:** Yêu cầu AI tạo ra một phiên bản cơ bản nhất của tính năng bạn muốn.
--   **Kiểm tra và xác thực:** Chạy thử mã nguồn, kiểm tra xem nó có hoạt động như mong đợi không.
--   **Tinh chỉnh và cải tiến:** Dựa trên kết quả kiểm tra, đưa ra các yêu cầu tiếp theo để sửa lỗi, thêm tính năng, hoặc tối ưu hóa code.
+<CodeBlock language="markdown" title="AGENTS.md">
+{`# Dự án: ứng dụng đặt cà phê
 
-## 3. Hiểu và kiểm soát mã nguồn
+- Backend: FastAPI (thư mục api/), frontend: React + Vite (thư mục web/).
+- Cài đặt: \`uv sync\` và \`npm install --prefix web\`.
+- Chạy test: \`uv run pytest\`. Chạy lint: \`uv run ruff check .\`.
+- Không sửa thư mục migrations/ bằng tay.
+- API key đọc từ biến môi trường, không bao giờ ghi vào code.`}
+</CodeBlock>
 
-Mặc dù AI viết code cho bạn, bạn vẫn là người chịu trách nhiệm cuối cùng về chất lượng và bảo mật của sản phẩm.
+Khi agent lặp lại một lỗi, thêm một dòng vào file này thay vì nhắc trong chat.
 
--   **Đọc và hiểu code:** Dành thời gian để đọc hiểu mã nguồn mà AI tạo ra. Điều này không chỉ giúp bạn phát hiện lỗi mà còn là một cách học hỏi tuyệt vời.
--   **Ưu tiên bảo mật:** Luôn kiểm tra các vấn đề bảo mật phổ biến, đặc biệt là khi xử lý dữ liệu người dùng hoặc tương tác với các API bên ngoài. Đừng mù quáng tin tưởng vào code do AI tạo ra.
--   **Tối ưu hóa khi cần thiết:** AI có thể tạo ra code hoạt động được nhưng không phải lúc nào cũng tối ưu. Nếu hiệu năng là một yếu-tố-quan-trọng, hãy chủ động refactor và cải thiện code.
+## 2. Lên kế hoạch trước, code sau
 
-Bằng cách áp dụng các phương pháp này, bạn sẽ chuyển từ việc chỉ "sử dụng" AI sang "hợp tác" với AI, tạo ra các sản phẩm chất lượng cao một cách hiệu quả.
+Với tác vụ lớn hơn vài dòng, yêu cầu agent **đọc code và đề xuất kế hoạch trước khi sửa**. Nhiều công cụ có sẵn chế độ chỉ đọc cho việc này, ví dụ chế độ **Plan** của OpenCode (nhấn `Tab`).
+
+- Đọc kế hoạch, sửa chỗ hiểu sai, rồi mới cho agent làm.
+- Chia việc thành các bước nhỏ, mỗi bước kiểm tra được. *"Thêm API tạo đơn hàng kèm test"* tốt hơn *"Làm cả ứng dụng đặt cà phê"*.
+- Một phiên cho một việc. Khi chuyển sang việc khác, mở phiên mới để ngữ cảnh gọn và rẻ hơn.
+
+## 3. Cho agent đúng ngữ cảnh
+
+- Chỉ đích danh file liên quan. Hầu hết công cụ cho gõ `@` để đính kèm file, ví dụ *"Sửa lỗi trong @api/orders.py, xem cách làm ở @api/users.py"*.
+- Dán nguyên thông báo lỗi và lệnh đã chạy, thay vì mô tả lại.
+- Nói rõ tiêu chí hoàn thành: *"Xong khi `uv run pytest` chạy qua hết"*.
+
+## 4. Đọc từng quyền agent xin
+
+Trước khi sửa file hay chạy lệnh, agent hiện diff hoặc câu lệnh và hỏi quyền. Đây là chốt an toàn quan trọng nhất.
+
+- Đọc diff trước khi đồng ý. Để ý file bị xoá, thư mục lạ, thay đổi ngoài phạm vi yêu cầu.
+- Cẩn thận với lệnh xoá, lệnh `git push`, lệnh cài gói, lệnh gọi mạng.
+- Chỉ chọn *"luôn cho phép"* với lệnh chỉ đọc hoặc lệnh bạn chạy hằng ngày (chạy test, lint).
+- Nội dung agent đọc từ web hoặc file lạ có thể chứa lệnh cài cắm. Nếu agent bỗng muốn làm việc bạn không yêu cầu, từ chối và hỏi lại.
+
+## 5. Kiểm chứng bằng test, không bằng cảm giác
+
+- Yêu cầu agent viết hoặc chạy test cho mọi thay đổi, và tự sửa đến khi test qua.
+- Tự chạy ứng dụng và thử luồng chính trước khi coi là xong.
+- Với lỗi: yêu cầu agent **viết test tái hiện lỗi trước**, rồi mới sửa.
+
+## 6. Dùng git làm điểm lưu
+
+- Commit trước khi giao việc lớn cho agent, để quay lại được nếu agent làm hỏng.
+- Commit nhỏ, mỗi commit một thay đổi có ý nghĩa. Dễ xem lại, dễ hoàn tác.
+- Làm việc trên nhánh riêng, không để agent sửa thẳng nhánh chính.
+
+## 7. Chọn model theo độ khó, theo dõi budget
+
+Mỗi lượt agent đọc file và gọi tool đều tốn token, và một phiên dài có thể tốn gấp nhiều lần một câu hỏi chat.
+
+| Tình huống | Model gợi ý |
+|---|---|
+| Việc lặt vặt, sửa nhỏ, chạy thử cấu hình | `deepseek-flash` (rẻ nhất) |
+| Phần lớn công việc hằng ngày | `gpt-6-luna`, `gemini-3.5-flash` |
+| Thiết kế, refactor lớn, lỗi khó | `gpt-6.1-sol`, `deepseek-v4-pro` |
+
+- Chỉ đổi sang model đắt khi model rẻ bí thật sự.
+- Theo dõi chi tiêu của đội thường xuyên, xem [Kiểm tra chi tiêu](../api-reference/spend-checking.mdx). Giá từng model ở [Bảng giá model](../user-guide/pricing.mdx).
+- Hết budget, mọi công cụ đều báo `429 Budget has been exceeded`.
+
+## 8. Giữ bí mật cho API key
+
+- Đặt key trong biến môi trường (`THUCCHIEN_API_KEY`, `GEMINI_API_KEY`), không ghi vào code hay file cấu hình được commit.
+- Thêm `.env` vào `.gitignore`. Kiểm tra `git diff` trước khi commit.
+- Không dán key vào chat với agent, không chụp màn hình có key.
+- Lộ key thì báo ban tổ chức để thu hồi ngay: ai có key đều tiêu được budget của đội.
+
+## 9. Bạn vẫn là người chịu trách nhiệm
+
+Agent làm nhanh, nhưng không hiểu mục tiêu sản phẩm bằng bạn. Đọc hiểu code nó viết, nhất là phần xử lý dữ liệu người dùng, xác thực và thanh toán. Khi không hiểu một đoạn code, hỏi agent giải thích trước khi chấp nhận.
