@@ -1,0 +1,100 @@
+---
+sidebar_position: 6
+---
+
+# Tích hợp với Hermes Agent
+
+import CodeBlock from '@theme/CodeBlock';
+import HermesStart from '@site/static/img/vibe-coding/hermes-start.png';
+import HermesTask from '@site/static/img/vibe-coding/hermes-task.png';
+
+[Hermes Agent](https://hermes-agent.nousresearch.com/docs/integrations/providers) là agent mã nguồn mở của Nous Research, chạy trong terminal hoặc ứng dụng desktop. Hermes hỗ trợ **custom endpoint** theo chuẩn OpenAI Chat Completions, nên trỏ thẳng vào gateway được. Hướng dẫn này được kiểm tra với Hermes Agent v0.21.5.
+
+## Chọn model phù hợp
+
+Hermes gọi gateway qua `/chat/completions`. Qua endpoint này, các model OpenAI đời mới (`gpt-6-*`) **không gọi được tool** khi đang suy nghĩ (lỗi 400), nên hãy dùng:
+
+| Model | Ghi chú |
+|---|---|
+| `deepseek-flash` | Rẻ, gọi tool tốt. Khuyên dùng |
+| `deepseek-v4-pro` | Mạnh hơn, đắt hơn khoảng 4 lần |
+| `gemini-3.5-flash` | Ngữ cảnh dài |
+
+## 1. Cài đặt
+
+<CodeBlock language="bash">
+{`# macOS / Linux
+curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash`}
+</CodeBlock>
+
+<CodeBlock language="powershell">
+{`# Windows PowerShell
+iex (irm https://hermes-agent.nousresearch.com/install.ps1)`}
+</CodeBlock>
+
+Mở lại terminal sau khi cài để lệnh `hermes` có trong `PATH`. Kiểm tra bằng `hermes --version`.
+
+## 2. Cấu hình gateway
+
+### Cách 1: Lệnh `hermes model`
+
+<CodeBlock language="bash">
+{`hermes model`}
+</CodeBlock>
+
+1. Chọn **Custom endpoint (self-hosted / VLLM / etc.)**.
+2. Base URL: `https://api.thucchien.ai/v1`
+3. API key: key của đội.
+4. Model: `deepseek-flash`.
+
+Hermes kiểm tra kết nối bằng cách gọi `/v1/models`, rồi lưu cấu hình lại.
+
+### Cách 2: Sửa file cấu hình
+
+Đặt key vào `~/.hermes/.env` (Windows: `%LOCALAPPDATA%\hermes\.env`). Với base URL `api.thucchien.ai`, Hermes tự đọc biến `THUCCHIEN_API_KEY`:
+
+<CodeBlock language="bash" title="~/.hermes/.env">
+{`THUCCHIEN_API_KEY=<your_api_key>`}
+</CodeBlock>
+
+Rồi sửa mục `model:` trong `config.yaml` cùng thư mục:
+
+<CodeBlock language="yaml" title="~/.hermes/config.yaml">
+{`model:
+  default: deepseek-flash
+  provider: custom
+  base_url: https://api.thucchien.ai/v1`}
+</CodeBlock>
+
+File `config.yaml` mặc định rất dài và có sẵn các dòng `default`, `provider`, `base_url`. Sửa các dòng đó, đừng thêm khối `model:` thứ hai.
+
+Hermes yêu cầu model có ngữ cảnh tối thiểu 64k token. Các model ở bảng trên đều đáp ứng. Nếu Hermes không tự nhận được độ dài ngữ cảnh, thêm `context_length: 128000` vào mục `model:`.
+
+## 3. Chạy thử
+
+<CodeBlock language="bash">
+{`cd du-an-cua-ban
+hermes`}
+</CodeBlock>
+
+<figure style={{ textAlign: 'center' }}>
+  <img src={HermesStart} alt="Màn hình khởi động Hermes Agent với model deepseek-flash" />
+  <figcaption>Góc dưới bên trái khung chào hiện <code>deepseek-flash</code>, nghĩa là Hermes đang dùng gateway.</figcaption>
+</figure>
+
+<figure style={{ textAlign: 'center' }}>
+  <img src={HermesTask} alt="Hermes thêm hàm vào todo.py và tự chạy thử" />
+  <figcaption>Hermes đọc code, thêm hàm, tự chạy <code>python -c</code> để thử rồi tóm tắt thay đổi.</figcaption>
+</figure>
+
+Chạy một lệnh không cần giao diện: `hermes -z "Tóm tắt README"`.
+
+## Đổi model trong phiên
+
+Gõ `/model` trong phiên chat để chọn model khác của gateway. Ứng dụng desktop của Hermes cũng có mục chọn **Custom endpoint** với cùng các trường như trên.
+
+## Xử lý lỗi thường gặp
+
+- **`400 Function tools with reasoning_effort are not supported`**: bạn đang dùng model `gpt-6-*`. Đổi sang `deepseek-flash` hoặc `gemini-3.5-flash`.
+- **`401`**: sai key, hoặc Hermes chưa đọc được `THUCCHIEN_API_KEY` (kiểm tra file `.env` nằm đúng thư mục Hermes).
+- **`429 Budget has been exceeded`**: đội đã dùng hết budget.
