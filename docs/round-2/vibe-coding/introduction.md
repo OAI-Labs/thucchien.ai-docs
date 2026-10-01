@@ -34,8 +34,22 @@ VibeCoding mở ra một kỷ nguyên mới, nơi rào cản kỹ thuật đư�
 
 **AI Thực Chiến Gateway** chính là "bộ não" đằng sau quy trình VibeCoding của bạn, cung cấp quyền truy cập vào các mô hình AI hàng đầu để biến ý tưởng của bạn thành hiện thực.
 
-:::warning[Khả năng tương thích]
-Khả năng tích hợp AI Thực Chiến Gateway với các AI Coding Assistant của bên thứ ba phụ thuộc vào kiến trúc API và chính sách của từng nhà cung cấp. Nhiều công cụ hoạt động trong một hệ sinh thái đóng, không cung cấp giao diện để định tuyến yêu cầu đến các endpoint tùy chỉnh (Custom Models) hoặc sử dụng khóa API riêng (Bring Your Own Key - BYOK).
+## Công cụ dùng được với Gateway
 
-Để đảm bảo khả năng tương thích linh hoạt, AI Thực Chiến Gateway được thiết kế tuân thủ chuẩn API của OpenAI. Do đó, Gateway hoạt động hiệu quả nhất với các công cụ hỗ trợ cấu hình proxy API, đặc biệt là các giải pháp dựa trên LiteLLM như [Cline](./cline-integration), [Cursor](./cursor-integration).
+Các coding agent (còn gọi là *harness*) dưới đây đã được kiểm tra với gateway. Mỗi công cụ gọi gateway theo một chuẩn API khác nhau, nên model dùng được cũng khác nhau.
+
+| Công cụ | Chuẩn API | Model dùng được | Hướng dẫn |
+|---|---|---|---|
+| Cline | OpenAI Chat Completions (LiteLLM) | Gemini, DeepSeek | [Cline](./cline-integration) |
+| Cursor | OpenAI Chat Completions | Gemini, DeepSeek | [Cursor](./cursor-integration) |
+| Codex (CLI, desktop, VS Code) | OpenAI Responses | Tất cả model văn bản | [Codex](./codex-integration) |
+| DeepSeek Harness | OpenAI Responses | Tất cả model văn bản | [DeepSeek Harness](./deepseek-harness-integration) |
+| Hermes Agent | OpenAI Chat Completions | Gemini, DeepSeek | [Hermes Agent](./hermes-agent-integration) |
+| Antigravity CLI | Gemini API | Chỉ Gemini | [Antigravity CLI](./antigravity-integration) |
+| OpenCode | Chat Completions + Responses | Tất cả model văn bản | [OpenCode](./opencode-integration) |
+| Gemini CLI | Gemini API | Chỉ Gemini | [Gemini CLI](./gemini-cli-integration) |
+
+:::warning[Khả năng tương thích]
+- Qua chuẩn Chat Completions, model OpenAI đời mới (`gpt-6-*`) **không gọi được tool** khi đang suy nghĩ (lỗi 400). Với công cụ dùng chuẩn này, hãy chọn model Gemini hoặc DeepSeek. Muốn dùng `gpt-6-*` cho agent, hãy dùng Codex hoặc DeepSeek Harness.
+- Công cụ chỉ chạy trong hệ sinh thái đóng, không cho dùng API key riêng (BYOK) hay endpoint tuỳ chỉnh, thì không dùng được với gateway.
 :::

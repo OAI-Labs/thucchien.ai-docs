@@ -12,8 +12,8 @@ Mặc định, model chỉ biết thông tin đến thời điểm được hu�
 
 | Nhóm model | Cách bật | Endpoint |
 |---|---|---|
-| Gemini (Google Vertex AI) | `tools=[{"googleSearch": {}}]` | `POST /chat/completions` |
-| OpenAI (`gpt-5*`, `gpt-6*`, `o3`, `o4-mini`, `gpt-4.1*`) | `tools=[{"type": "web_search"}]` | `POST /responses` |
+| Gemini (Gemini Enterprise Agent Platform (trước đây là Vertex AI)) | `tools=[{"googleSearch": {}}]` | `POST /chat/completions` |
+| OpenAI (`gpt-5.6-*`, `gpt-6*`, `o3`, `o4-mini`) | `tools=[{"type": "web_search"}]` | `POST /responses` |
 | DeepSeek | Không hỗ trợ | — |
 
 :::warning[Chi phí]
@@ -87,7 +87,7 @@ Tham số `web_search_options` (kiểu OpenAI) chỉ hoạt động với một 
 
 Model OpenAI chỉ tìm kiếm web qua endpoint **`/responses`**, không qua `/chat/completions`.
 
-**Model hỗ trợ:** `gpt-5`, `gpt-5-mini`, `gpt-5-nano`, `gpt-5.4`, `gpt-5.4-mini`, `gpt-5.4-nano`, `gpt-5.5`, `gpt-5.6-*`, `gpt-6-*`, `o3`, `o4-mini`, `gpt-4.1`, `gpt-4.1-mini`. Không hỗ trợ: `gpt-4o-mini`.
+**Model hỗ trợ:** `gpt-5.6-*`, `gpt-6-*`, `gpt-6.1-sol`, `o3`, `o4-mini`.
 
 <Tabs>
   <TabItem value="python-openai" label="Python (openai)">
@@ -100,7 +100,7 @@ client = OpenAI(
 )
 
 response = client.responses.create(
-    model="gpt-5-mini",
+    model="gpt-6-luna",
     input="Tỷ giá USD/VND hôm nay là bao nhiêu?",
     tools=[{"type": "web_search"}],
 )
@@ -115,7 +115,7 @@ print(response.output_text)`}
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer <your_api_key>" \\
   -d '{
-    "model": "gpt-5-mini",
+    "model": "gpt-6-luna",
     "input": "Tỷ giá USD/VND hôm nay là bao nhiêu?",
     "tools": [{"type": "web_search"}]
   }'`}
@@ -145,7 +145,7 @@ Chi phí thực tế đo được trên gateway là khoảng $0.028–$0.058 cho
 
 ## Tham khảo
 
-- [Grounding with Google Search — Vertex AI](https://docs.cloud.google.com/vertex-ai/generative-ai/docs/grounding/grounding-with-google-search)
-- [Bảng giá Vertex AI (mục Grounding)](https://docs.cloud.google.com/vertex-ai/generative-ai/pricing)
+- [Grounding with Google Search — Agent Platform](https://docs.cloud.google.com/vertex-ai/generative-ai/docs/grounding/grounding-with-google-search)
+- [Bảng giá Agent Platform (mục Grounding)](https://docs.cloud.google.com/vertex-ai/generative-ai/pricing)
 - [Web search — OpenAI](https://platform.openai.com/docs/guides/tools-web-search)
 - [Web search — LiteLLM](https://docs.litellm.ai/docs/completion/web_search)

@@ -22,13 +22,13 @@ AI cung cấp hai phương pháp để tạo hình ảnh từ mô tả văn bả
 
 Phương pháp này tương thích với các thư viện client của OpenAI và là cách được khuyến nghị cho các mô hình sinh ảnh chuyên dụng. API sẽ trả về dữ liệu ảnh được mã hóa dưới dạng **base64** thay vì URL.
 
-**Model được hỗ trợ** (Nano Banana, Google Vertex AI; tên alias và ID gốc gọi cùng một model):
+**Model được hỗ trợ** (Nano Banana, Gemini Enterprise Agent Platform (trước đây là Vertex AI); tên alias và ID gốc gọi cùng một model):
 - `nano-banana-2` = `gemini-3.1-flash-image`
 - `nano-banana-2-lite` = `gemini-3.1-flash-lite-image`: rẻ và nhanh nhất
 - `nano-banana-pro` = `gemini-3-pro-image`: chất lượng cao nhất
 - `nano-banana` = `gemini-2.5-flash-image`: Google ngừng hỗ trợ từ 02/10/2026
 
-Ngoài ra còn có model OpenAI `gpt-image-2`, `gpt-image-2.5-flare`, `gpt-image-2.5-sunburst` và `gpt-image-1-mini`. Các model này dùng `size` và `quality` thay cho `aspect_ratio`, xem [Model OpenAI và DeepSeek](./openai-deepseek.mdx#tạo-ảnh-gpt-image-).
+Ngoài ra còn có model OpenAI `gpt-image-2.5-flare` và `gpt-image-2.5-sunburst`. Các model này dùng `size` và `quality` thay cho `aspect_ratio`, xem [Model OpenAI và DeepSeek](./openai-deepseek.mdx#tạo-ảnh-gpt-image-).
 
 Mỗi request tạo **1 ảnh** (`n` chỉ nhận `1`). Chọn tỷ lệ khung hình bằng `aspect_ratio` (`1:1`, `3:4`, `4:3`, `16:9`, `9:16`); tham số `size` không có tác dụng.
 
@@ -391,5 +391,5 @@ print(f"Image saved to {IMAGE_SAVE_PATH}")`}
 </Tabs>
 
 :::tip[Ghi chú]
-Để biết thêm chi tiết, bạn có thể tham khảo tài liệu về sinh ảnh từ [Google Cloud Vertex AI](https://cloud.google.com/vertex-ai/docs/generative-ai/image/generate-images) và các tham số sinh ảnh cho Google AI Studio qua [LiteLLM](https://docs.litellm.ai/docs/providers/google_ai_studio/image_gen#supported-parameters).
+Để biết thêm chi tiết, bạn có thể tham khảo tài liệu về sinh ảnh từ [Gemini Enterprise Agent Platform](https://cloud.google.com/vertex-ai/docs/generative-ai/image/generate-images) và các tham số sinh ảnh cho Google AI Studio qua [LiteLLM](https://docs.litellm.ai/docs/providers/google_ai_studio/image_gen#supported-parameters).
 :::

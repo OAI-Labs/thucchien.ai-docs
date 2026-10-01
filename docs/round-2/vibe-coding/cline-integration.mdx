@@ -2,7 +2,7 @@
 sidebar_position: 2
 ---
 # Tích hợp với CLine
-import ClineIntegrationVideo from '@site/static/video/cline_integration_guide.mkv';
+import ClineSettings from '@site/static/img/vibe-coding/cline-settings.png';
 
 [CLine](https://cline.bot/) là một trợ lý mã AI được thiết kế để giúp các nhà phát triển viết, xem xét và tối ưu hóa mã hiệu quả hơn. Bằng cách tích hợp CLine với **AI Thực Chiến Gateway**, bạn có thể thực hành VibeCoding một cách hiệu quả.
 
@@ -14,19 +14,10 @@ import ClineIntegrationVideo from '@site/static/video/cline_integration_guide.mk
 2.  Thiết lập `API Provider` thành `LiteLLM`.
 3.  Thiết lập `Base URL` là `https://api.thucchien.ai`.
 4.  Nhập `API Key` của bạn.
-5.  Thiết lập `Model ID` thành `gemini-2.5-pro`.
-6.  (Tùy chọn) Trong `MODEL CONFIGURATION`, thiết lập `Context Window Size` thành `1048576`.
-7.  Nhấn `Done` để lưu cấu hình.
+5.  Thiết lập `Model` thành `gemini-2.5-pro`.
+6.  Nhấn `Done` để lưu cấu hình.
 
-<div align="center">
-
-![CLine Integration](@site/static/img/cline_integration.png)
-
-*Giao diện cấu hình CLine*
-
-</div>
-
-## Video hướng dẫn
-<video width="100%" height="516" controls>
-  <source src={ClineIntegrationVideo} />
-</video>
+<figure style={{ textAlign: 'center' }}>
+  <img src={ClineSettings} alt="Giao diện cấu hình CLine với provider LiteLLM" />
+  <figcaption>Giao diện cấu hình CLine</figcaption>
+</figure>

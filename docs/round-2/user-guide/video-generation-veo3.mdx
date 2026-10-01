@@ -11,7 +11,7 @@ import GeneratedVideo from '@site/static/video/my_generated_video.mp4';
 
 Việc tạo video là một tác vụ tốn nhiều tài nguyên và thời gian. Do đó, tương tác với mô hình Veo không diễn ra ngay lập tức mà theo một quy trình bất đồng bộ (asynchronous) gồm 3 bước. API tuân theo chuẩn [OpenAI Videos API](https://platform.openai.com/docs/api-reference/videos), nên bạn dùng được thư viện `openai` và header `Authorization: Bearer` như các API khác.
 
-**Model được hỗ trợ** (Google Vertex AI):
+**Model được hỗ trợ** (Gemini Enterprise Agent Platform (trước đây là Vertex AI)):
 - `veo-3.1-generate-001`: chất lượng cao nhất, $0.40 / giây video
 - `veo-3.1-fast-generate-001`: nhanh hơn, $0.10 / giây video (720p), $0.12 / giây (1080p)
 - `veo-3.1-lite-generate-001`: rẻ nhất, $0.05 / giây video (720p)
