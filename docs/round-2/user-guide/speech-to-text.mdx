@@ -10,8 +10,10 @@ import CodeBlock from '@theme/CodeBlock';
 
 Mô hình Speech-to-Text (STT) nhận một file âm thanh và trả về nội dung lời nói dưới dạng văn bản, hỗ trợ tiếng Việt.
 
-**Model được hỗ trợ** (Google Vertex AI):
+**Model được hỗ trợ** (Gemini Enterprise Agent Platform (trước đây là Vertex AI)):
 - `gemini-3.5-transcribe-preview`
+
+**Model OpenAI:** `gpt-4o-transcribe`, `gpt-4o-mini-transcribe`, `gpt-transcribe`, `whisper-1`. Riêng `gpt-transcribe` phải gửi `response_format=json`, xem [Model OpenAI và DeepSeek](./openai-deepseek.mdx#âm-thanh).
 
 **Endpoint:** `POST /audio/transcriptions`
 

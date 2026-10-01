@@ -23,7 +23,7 @@ interface InteractiveApiRequestProps {
   buildBody: (params: Record<string, any>) => Record<string, any>;
   exampleResponse: Record<string, any>;
   isMarkdownResponse?: boolean;
-  customPreview?: (response: any) => React.ReactNode;
+  customPreview?: (response: any, parameters: Record<string, any>) => React.ReactNode;
 }
 
 // --- COMPONENT ---
@@ -358,7 +358,7 @@ export default function InteractiveApiRequest({
         <div className={reqStyles.responseContainer}>
           {customPreview && (
             <div className={reqStyles.customPreviewContainer}>
-              {customPreview(response)}
+              {customPreview(response, parameters)}
             </div>
           )}
           <CopyableCodeBlock

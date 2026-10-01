@@ -1,0 +1,79 @@
+---
+sidebar_position: 9
+---
+
+# Tích hợp với Gemini CLI
+
+import CodeBlock from '@theme/CodeBlock';
+import GeminiCliStart from '@site/static/img/vibe-coding/gemini-cli-start.png';
+import GeminiCliTools from '@site/static/img/vibe-coding/gemini-cli-tools.png';
+
+[Gemini CLI](https://github.com/google-gemini/gemini-cli) là coding agent mã nguồn mở của Google, chạy trong terminal. CLI gọi gateway qua Gemini API, nên **chỉ dùng được model Gemini**. Hướng dẫn này được kiểm tra với Gemini CLI `0.62.0`.
+
+## 1. Cài đặt
+
+<CodeBlock language="bash">
+{`npm install -g @google/gemini-cli`}
+</CodeBlock>
+
+## 2. Chọn đăng nhập bằng API key và model mặc định
+
+Tạo (hoặc sửa) file `~/.gemini/settings.json` (Windows: `%USERPROFILE%\.gemini\settings.json`):
+
+<CodeBlock language="json" title="~/.gemini/settings.json">
+{`{
+  "security": {
+    "auth": { "selectedType": "gemini-api-key" }
+  },
+  "model": { "name": "gemini-3.5-flash" }
+}`}
+</CodeBlock>
+
+Nếu không có file này, lần đầu CLI sẽ hỏi cách đăng nhập. Chọn **Use Gemini API Key**, đừng chọn đăng nhập bằng tài khoản Google.
+
+## 3. Trỏ CLI vào gateway
+
+<CodeBlock language="bash">
+{`# macOS / Linux: thêm vào ~/.zshrc hoặc ~/.bashrc
+export GEMINI_API_KEY="<your_api_key>"
+export GOOGLE_GEMINI_BASE_URL="https://api.thucchien.ai"`}
+</CodeBlock>
+
+<CodeBlock language="powershell">
+{`# Windows PowerShell (mở lại terminal sau khi chạy)
+setx GEMINI_API_KEY "<your_api_key>"
+setx GOOGLE_GEMINI_BASE_URL "https://api.thucchien.ai"`}
+</CodeBlock>
+
+Base URL **không** có `/v1` hay `/v1beta`. CLI tự thêm `/v1beta/models/...`.
+
+## 4. Chạy thử
+
+<CodeBlock language="bash">
+{`cd du-an-cua-ban
+gemini`}
+</CodeBlock>
+
+Lần đầu mở một thư mục, CLI hỏi có tin tưởng thư mục đó không. Chọn tin tưởng để agent được đọc và sửa file.
+
+<figure style={{ textAlign: 'center' }}>
+  <img src={GeminiCliStart} alt="Gemini CLI khởi động với Gemini API key và model gemini-3.5-flash" />
+  <figcaption>Thanh dưới cùng hiện <code>gemini-api-key</code> và model <code>gemini-3.5-flash</code>, nghĩa là CLI đang đi qua gateway.</figcaption>
+</figure>
+
+Agent tự đọc thư mục và file. Trước khi chạy lệnh shell hay sửa file, CLI hỏi quyền.
+
+<figure style={{ textAlign: 'center' }}>
+  <img src={GeminiCliTools} alt="Gemini CLI đọc file và xin quyền chạy lệnh shell" />
+  <figcaption>Agent dùng <b>ReadFolder</b>, <b>ReadFile</b> rồi xin quyền chạy <code>ruff check</code>.</figcaption>
+</figure>
+
+- Đổi model trong phiên: gõ `/model`. Chỉ chọn model Gemini có trên gateway (ví dụ `gemini-3.5-flash`), hoặc khởi động bằng `gemini -m gemini-3.5-flash`.
+- Chạy một lệnh không cần giao diện: `gemini --skip-trust -p "Tóm tắt README"`. Cờ `--skip-trust` bỏ qua câu hỏi tin tưởng thư mục, cần khi chạy trong script.
+
+## Xử lý lỗi thường gặp
+
+- **CLI vẫn đòi đăng nhập Google**: `settings.json` thiếu `"selectedType": "gemini-api-key"`, hoặc chưa đặt `GEMINI_API_KEY`.
+- **`401` / `API key not valid`**: sai key, hoặc chưa mở lại terminal. Kiểm tra `GOOGLE_GEMINI_BASE_URL` đã được đặt; thiếu biến này CLI sẽ gọi thẳng Google.
+- **`404` / model không tồn tại**: model đó không có trên gateway. Model OpenAI và DeepSeek không dùng được qua Gemini CLI.
+- **`429 Budget has been exceeded`**: đội đã dùng hết budget. Xem [Kiểm tra chi tiêu](../api-reference/spend-checking.mdx).

@@ -1,0 +1,98 @@
+---
+sidebar_position: 7
+---
+
+# Tích hợp với Antigravity CLI
+
+import CodeBlock from '@theme/CodeBlock';
+import AgyTheme from '@site/static/img/vibe-coding/agy-onboard-theme.png';
+import AgyTos from '@site/static/img/vibe-coding/agy-onboard-tos.png';
+import AgySession from '@site/static/img/vibe-coding/agy-session.png';
+
+[Antigravity CLI](https://antigravity.google/) (`agy`) là coding agent chạy trong terminal của Google. CLI kết nối được với gateway qua Gemini API, nên **chỉ dùng được model Gemini**. Hướng dẫn này được kiểm tra với `agy 1.2.14`.
+
+## 1. Cài đặt
+
+<CodeBlock language="bash">
+{`# macOS / Linux
+curl -fsSL https://antigravity.google/cli/install.sh | bash`}
+</CodeBlock>
+
+<CodeBlock language="powershell">
+{`# Windows PowerShell
+irm https://antigravity.google/cli/install.ps1 | iex`}
+</CodeBlock>
+
+## 2. Chuyển sang đăng nhập bằng API key
+
+Tạo file `~/.gemini/antigravity-cli/settings.json` (Windows: `%USERPROFILE%\.gemini\antigravity-cli\settings.json`):
+
+<CodeBlock language="json" title="~/.gemini/antigravity-cli/settings.json">
+{`{
+  "modelProvider": "gemini"
+}`}
+</CodeBlock>
+
+## 3. Trỏ CLI vào gateway
+
+<CodeBlock language="bash">
+{`# macOS / Linux: thêm vào ~/.zshrc hoặc ~/.bashrc
+export GEMINI_API_KEY="<your_api_key>"
+export GOOGLE_GEMINI_BASE_URL="https://api.thucchien.ai"`}
+</CodeBlock>
+
+<CodeBlock language="powershell">
+{`# Windows PowerShell (mở lại terminal sau khi chạy)
+setx GEMINI_API_KEY "<your_api_key>"
+setx GOOGLE_GEMINI_BASE_URL "https://api.thucchien.ai"`}
+</CodeBlock>
+
+- Base URL **không** có `/v1` hay `/v1beta`. CLI tự thêm `/v1beta/models/...`.
+- CLI **không** đọc file `.env`, và biến `GOOGLE_API_KEY` không có tác dụng. Phải dùng đúng `GEMINI_API_KEY`.
+
+## 4. Lần chạy đầu tiên
+
+<CodeBlock language="bash">
+{`cd du-an-cua-ban
+agy`}
+</CodeBlock>
+
+Lần đầu, CLI hỏi ba bước:
+
+1. **Chọn giao diện màu**: chọn tuỳ ý.
+2. **Điều khoản và dữ liệu sử dụng**: ô cho phép Google thu thập dữ liệu sử dụng được **tích sẵn**. Bỏ tích nếu không muốn chia sẻ, rồi đồng ý điều khoản để tiếp tục.
+3. **Tin tưởng thư mục**: xác nhận cho phép agent làm việc trong thư mục dự án.
+
+<figure style={{ textAlign: 'center' }}>
+  <img src={AgyTheme} alt="Antigravity CLI hỏi chọn giao diện màu" />
+  <figcaption>Bước 1: chọn giao diện màu.</figcaption>
+</figure>
+
+<figure style={{ textAlign: 'center' }}>
+  <img src={AgyTos} alt="Antigravity CLI hỏi đồng ý điều khoản và chia sẻ dữ liệu" />
+  <figcaption>Bước 2: điều khoản. Ô chia sẻ dữ liệu sử dụng bật sẵn, có thể bỏ tích.</figcaption>
+</figure>
+
+## 5. Chọn model
+
+CLI chỉ nhận **tên model có sẵn của nó**, không nhận tên tuỳ ý. Xem danh sách bằng:
+
+<CodeBlock language="bash">
+{`agy models`}
+</CodeBlock>
+
+Tên model gồm cả mức suy nghĩ, ví dụ `gemini-3.8-flash-medium`, `gemini-3.6-flash-low`, `gemini-3.1-pro-low`. Tên của gateway như `gemini-3.5-flash` sẽ bị CLI từ chối. Model của OpenAI và DeepSeek không dùng được qua CLI này.
+
+Khi đã vào phiên, đầu màn hình hiện **Gemini API key** và tên model, nghĩa là CLI đang đi qua gateway. Trước khi chạy lệnh hay sửa file, agent sẽ hỏi quyền.
+
+<figure style={{ textAlign: 'center' }}>
+  <img src={AgySession} alt="Phiên Antigravity CLI dùng Gemini API key, agent xin quyền chạy lệnh" />
+  <figcaption>Phiên dùng <b>Gemini 3.8 Flash (Medium)</b> qua gateway, agent đang xin quyền chạy lệnh Bash.</figcaption>
+</figure>
+
+## Xử lý lỗi thường gặp
+
+- **CLI không khởi động sau khi thêm `settings.json`**: chưa đặt `GEMINI_API_KEY`, hoặc chưa mở lại terminal.
+- **Model bị từ chối**: bạn gõ tên model của gateway. Dùng tên trong `agy models`.
+- **`404` / model không tồn tại**: model đó chưa có trên gateway. Chọn model Gemini khác trong `agy models`.
+- **`429 Budget has been exceeded`**: đội đã dùng hết budget.
