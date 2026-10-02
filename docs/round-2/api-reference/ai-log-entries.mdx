@@ -1,0 +1,192 @@
+---
+sidebar_position: 11
+title: Đọc lại AI Log
+description: Xem lại các dòng AI Log đội đã gửi lên hệ thống BTC.
+hide_table_of_contents: true
+---
+
+import ApiReferenceLayout, { LeftColumn, RightColumn } from '@site/src/components/ApiReferenceLayout';
+import InteractiveApiRequest from '@site/src/components/InteractiveApiRequest';
+import ApiParameter from '@site/src/components/ApiParameter';
+import Badge from '@site/src/components/Badge';
+
+# Đọc lại AI Log
+
+## <Badge method="GET" /> `/api/ingest/entries`
+
+Trả về các dòng log AI mà đội đã gửi lên (qua `scripts/submit_log.py` hoặc pre-push hook), mới nhất trước. Dùng để kiểm tra log đã lên đủ và đúng chưa. Cách cài đặt và gửi log xem [Cấu hình AI Log](../ai-log-guide.mdx).
+
+:::warning[Khác host, khác key]
+API này chạy trên **`https://live.thucchien.ai`** và xác thực bằng **token `aitc_...`** của đội (biến `AI_LOG_API_KEY` trong `.env`), **không phải** key Gateway `api.thucchien.ai` dùng ở các trang khác trong mục này. API chỉ trả log của đội sở hữu token.
+:::
+
+<ApiReferenceLayout>
+  <LeftColumn>
+    ### Headers
+
+    <ApiParameter name="Authorization" type="string" required isEnd>
+      `Bearer <AI_LOG_API_KEY>`, token bắt đầu bằng `aitc_` BTC cấp cho đội.
+    </ApiParameter>
+
+    ---
+
+    ### Tham số query
+
+    <ApiParameter name="limit" type="integer">
+      Số dòng mỗi trang. Mặc định `50`, tối đa `200`.
+    </ApiParameter>
+    <ApiParameter name="before" type="string">
+      Chỉ lấy log có `ts` trước thời điểm này (ISO 8601). Dùng để lấy trang tiếp theo: truyền giá trị `next_before` của trang trước, giữ nguyên các tham số khác.
+    </ApiParameter>
+    <ApiParameter name="event" type="string">
+      Lọc theo tên event, khớp chính xác (ví dụ `UserPromptSubmit`, `PostToolUse`). Để trống là không lọc.
+    </ApiParameter>
+    <ApiParameter name="tool" type="string" isEnd>
+      Lọc theo công cụ, không phân biệt hoa thường (ví dụ `claude`, `cursor`, `codex`). Để trống là không lọc.
+    </ApiParameter>
+
+    ---
+
+    ### Cấu trúc phản hồi (Response Body)
+
+    <ApiParameter name="items" type="array">
+      Các dòng log, mới nhất trước.
+    </ApiParameter>
+    <ApiParameter name="next_before" type="string | null" isEnd>
+      Khác `null` khi còn trang sau; truyền vào `before` để lấy tiếp.
+    </ApiParameter>
+
+    #### Mỗi phần tử trong `items`
+
+    <ApiParameter name="ts" type="string" indent={2}>
+      Thời điểm event diễn ra (UTC, ISO 8601).
+    </ApiParameter>
+    <ApiParameter name="received_at" type="string" indent={2}>
+      Thời điểm hệ thống nhận dòng log.
+    </ApiParameter>
+    <ApiParameter name="tool" type="string" indent={2}>
+      Công cụ AI, đã chuyển về chữ thường.
+    </ApiParameter>
+    <ApiParameter name="event" type="string" indent={2}>
+      Tên event gốc của công cụ.
+    </ApiParameter>
+    <ApiParameter name="session_id" type="string" indent={2}>
+      Mã phiên làm việc.
+    </ApiParameter>
+    <ApiParameter name="model" type="string" indent={2}>
+      Tên model nếu công cụ cung cấp.
+    </ApiParameter>
+    <ApiParameter name="repo, branch, commit, student" type="string" indent={2}>
+      Thông tin git lúc ghi log.
+    </ApiParameter>
+    <ApiParameter name="prompt" type="string" indent={2}>
+      Nội dung prompt (với event prompt).
+    </ApiParameter>
+    <ApiParameter name="tool_name, tool_input, tool_response, tool_error" type="string / object" indent={2}>
+      Tool AI đã gọi, input, output và lỗi (với event gọi tool).
+    </ApiParameter>
+    <ApiParameter name="response_summary, stop_reason" type="string" indent={2} isEnd>
+      Câu trả lời cuối lượt và lý do dừng (với event kết thúc lượt).
+    </ApiParameter>
+
+    Trường không có giá trị trả về `null`. Các trường dài đã bị cắt theo giới hạn như lúc lưu.
+
+    ---
+
+    ### Mã lỗi
+
+    <ApiParameter name="401" type="unauthorized" isEnd>
+      Thiếu token hoặc token sai. Đội đã bị khoá bảng đấu **vẫn đọc được**; khoá chỉ chặn gửi log mới.
+    </ApiParameter>
+
+  </LeftColumn>
+  <RightColumn>
+    <InteractiveApiRequest
+      method="GET"
+      apiUrl="https://live.thucchien.ai/api/ingest/entries?limit={{limit}}&tool={{tool}}&event={{event}}"
+      headers={{ accept: 'application/json' }}
+      initialParameters={{
+        apiKey: '<AI_LOG_API_KEY>',
+        limit: '20',
+        tool: '',
+        event: '',
+      }}
+      parameterControls={{
+        apiKey: { type: 'input' },
+        limit: { type: 'input' },
+        tool: { type: 'select', options: ['', 'claude', 'cursor', 'codex', 'gemini', 'copilot', 'antigravity'] },
+        event: { type: 'input' },
+      }}
+      codeTemplates={{
+        'curl': {
+          language: 'bash',
+          template: `curl -G 'https://live.thucchien.ai/api/ingest/entries' \\
+  -H 'Authorization: Bearer {{apiKey}}' \\
+  --data-urlencode 'limit={{limit}}' \\
+  --data-urlencode 'tool={{tool}}' \\
+  --data-urlencode 'event={{event}}'`,
+        },
+        'Python (requests)': {
+          language: 'python',
+          template: `import requests
+
+API_KEY = "{{apiKey}}"  # AI_LOG_API_KEY trong .env
+url = "https://live.thucchien.ai/api/ingest/entries"
+params = {"limit": {{limit}}, "tool": "{{tool}}", "event": "{{event}}"}
+
+# Lấy hết log của đội, từng trang một
+items = []
+while True:
+    res = requests.get(url, params=params, headers={"Authorization": f"Bearer {API_KEY}"})
+    res.raise_for_status()
+    page = res.json()
+    items += page["items"]
+    if not page["next_before"]:
+        break
+    params["before"] = page["next_before"]
+
+print(len(items), "dòng log")
+for e in items[:5]:
+    print(e["ts"], e["tool"], e["event"], (e["prompt"] or "")[:60])`,
+        },
+        'Node.js (fetch)': {
+          language: 'javascript',
+          template: `const API_KEY = "{{apiKey}}"; // AI_LOG_API_KEY trong .env
+const params = new URLSearchParams({ limit: "{{limit}}", tool: "{{tool}}", event: "{{event}}" });
+
+const res = await fetch(\`https://live.thucchien.ai/api/ingest/entries?\${params}\`, {
+  headers: { Authorization: \`Bearer \${API_KEY}\` },
+});
+const page = await res.json();
+for (const e of page.items) console.log(e.ts, e.tool, e.event);
+console.log("Trang sau:", page.next_before);`,
+        },
+      }}
+      buildBody={null}
+      exampleResponse={{
+  "items": [
+    {
+      "ts": "2026-10-02T07:05:31.123Z",
+      "received_at": "2026-10-02T07:12:04.552Z",
+      "tool": "claude",
+      "event": "UserPromptSubmit",
+      "session_id": "4f1c...",
+      "model": null,
+      "repo": "ten-repo-cua-doi",
+      "branch": "main",
+      "commit": "a1b2c3d",
+      "student": "ten-doi@example.com",
+      "prompt": "Viết test cho hàm đăng nhập",
+      "tool_name": null,
+      "tool_input": null,
+      "tool_response": null,
+      "tool_error": null,
+      "response_summary": null,
+      "stop_reason": null
+    }
+  ],
+  "next_before": null
+}}
+    />
+  </RightColumn>
+</ApiReferenceLayout>

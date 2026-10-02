@@ -38,6 +38,12 @@ const config: Config = {
     locales: ['vn'],
   },
 
+  // Cho phép vẽ diagram bằng khối ```mermaid trong tài liệu.
+  markdown: {
+    mermaid: true,
+  },
+  themes: ['@docusaurus/theme-mermaid'],
+
   presets: [
     [
       'classic',
