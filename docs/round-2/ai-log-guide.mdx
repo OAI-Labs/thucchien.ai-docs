@@ -202,7 +202,64 @@ Mỗi event là **một dòng JSON** trong `.ai-log/session.jsonl`. Ví dụ m�
 
 Body gửi lên `POST /api/ingest` có dạng `{"entries": [ ...các dòng trên... ]}`, tối đa **500 dòng mỗi request**, kèm header `Authorization: Bearer <AI_LOG_API_KEY>`. Gửi lại cùng một dòng là an toàn: hệ thống tự loại bản trùng.
 
-## 4. Được sửa gì, không được làm gì {#duoc-sua-gi-khong-duoc-lam-gi}
+## 4. Đọc lại log đã gửi (API) {#doc-lai-log-da-gui}
+
+Để kiểm tra log đã lên hệ thống đủ và đúng chưa, đội gọi API sau bằng **chính token trong `.env`**. API chỉ trả log của đội sở hữu token.
+
+```http
+GET https://live.thucchien.ai/api/ingest/entries
+Authorization: Bearer <AI_LOG_API_KEY>
+```
+
+| Tham số (query) | Mặc định | Ý nghĩa |
+|---|---|---|
+| `limit` | `50` | Số dòng mỗi trang, tối đa `200`. |
+| `before` | — | Chỉ lấy log có `ts` trước thời điểm này (ISO 8601). Dùng để lấy trang tiếp theo. |
+| `event` | — | Lọc theo tên event, khớp chính xác (ví dụ `UserPromptSubmit`). |
+| `tool` | — | Lọc theo công cụ, không phân biệt hoa thường (ví dụ `claude`, `cursor`). |
+
+Ví dụ lấy 20 prompt gần nhất của Claude Code:
+
+```bash
+curl -s "https://live.thucchien.ai/api/ingest/entries?tool=claude&event=UserPromptSubmit&limit=20" \
+  -H "Authorization: Bearer aitc_...token-cua-doi..."
+```
+
+Kết quả (dữ liệu mẫu):
+
+```json
+{
+  "items": [
+    {
+      "ts": "2026-10-02T07:05:31.123Z",
+      "received_at": "2026-10-02T07:12:04.552Z",
+      "tool": "claude",
+      "event": "UserPromptSubmit",
+      "session_id": "4f1c...",
+      "model": null,
+      "repo": "ten-repo-cua-doi",
+      "branch": "main",
+      "commit": "a1b2c3d",
+      "student": "ten-doi@example.com",
+      "prompt": "Viết test cho hàm đăng nhập",
+      "tool_name": null,
+      "tool_input": null,
+      "tool_response": null,
+      "tool_error": null,
+      "response_summary": null,
+      "stop_reason": null
+    }
+  ],
+  "next_before": null
+}
+```
+
+- Log xếp **mới nhất trước**. Thời gian trả về theo UTC (`Z`); `received_at` là lúc hệ thống nhận.
+- Khi `next_before` khác `null`, còn trang sau: gọi lại với `before=<giá trị next_before>`, giữ nguyên các tham số khác.
+- Token sai hoặc thiếu → `401`. Đội đã bị khoá bảng đấu vẫn đọc được (khoá chỉ chặn gửi log mới).
+- Các trường dài đã bị cắt theo giới hạn ở [mục 3](#event-btc-yeu-cau) như lúc lưu.
+
+## 5. Được sửa gì, không được làm gì {#duoc-sua-gi-khong-duoc-lam-gi}
 
 :::warning[Quy định]
 **Các bạn có thể sửa script miễn sao đảm bảo push đủ, đúng những event BTC yêu cầu và không có hành vi can thiệp log.**
@@ -224,7 +281,7 @@ Dù sửa gì, kết quả gửi lên vẫn phải **đủ** các event ở [m�
 - tạo log giả, sửa thời gian `ts`, hoặc ghi những việc không thực sự diễn ra;
 - gửi log của đội khác hay dùng token của đội khác.
 
-## 5. Quyền riêng tư
+## 6. Quyền riêng tư
 
 Log được gửi **nguyên văn** và BTC xem được đầy đủ: prompt, lệnh AI đã chạy, nội dung file AI đọc/sửa, output lệnh, câu trả lời của AI. Vì vậy:
 
@@ -232,7 +289,7 @@ Log được gửi **nguyên văn** và BTC xem được đầy đủ: prompt, l
 - không để AI đọc, in ra hay sửa file chứa bí mật (`.env`, file key...);
 - trường `student` là email trong `git config`; nếu không muốn lộ email cá nhân, đặt riêng cho repo này: `git config user.email "ten-doi@example.com"`.
 
-## 6. Xử lý sự cố
+## 7. Xử lý sự cố
 
 - **Không thấy dòng log mới:** repo chưa có `origin` (`git remote -v`); Python thấp hơn 3.10; chưa đồng ý tin tưởng hook của workspace; mở công cụ AI ở thư mục con thay vì thư mục gốc repo.
 - **Push không gửi log:** chưa chạy Bước 2 trên máy này; chạy lại `setup_hooks`.
