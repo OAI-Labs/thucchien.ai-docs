@@ -6,6 +6,12 @@ on:
       - main
     # Review gh actions docs if you want to further define triggers, paths, etc
     # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#on
+  workflow_dispatch:
+
+# Không huỷ lần deploy đang chạy; lần push sau xếp hàng chờ.
+concurrency:
+  group: pages
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -17,7 +23,8 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
-          node-version: 18
+          # Docusaurus 3.9 cần Node >= 20
+          node-version: 22
           cache: npm
 
       - name: Install dependencies

@@ -12,33 +12,31 @@ import Badge from '@site/src/components/Badge';
 
 # Sinh video (Bước 3/3): Tải video
 
-## <Badge method="GET" /> `/gemini/download/v1beta/files/{video_id}:download?alt=media`
+## <Badge method="GET" /> `/v1/videos/{video_id}/content`
 
-Khi video đã sẵn sàng, kết quả kiểm tra trạng thái sẽ chứa một URI. Bạn sử dụng `video_id` trích xuất từ URI này để tải video về.
+Khi `status` ở Bước 2 là `completed`, dùng cùng `id` đó để tải file video về.
 
 <ApiReferenceLayout>
   <LeftColumn>
     ### Tham số đường dẫn (Path Parameters)
     <ApiParameter name="video_id" type="string" required isEnd>
-      ID của video cần tải về, được trích xuất từ `uri` ở Bước 2. Ví dụ: `3j6svp4106e7`.
+      `id` của video nhận được ở [Bước 1](./video-generation-start).
     </ApiParameter>
-    
+
     ---
 
     ### Phản hồi (Response)
-    Phản hồi thành công sẽ là dữ liệu video (ví dụ: file `video/mp4`).
+    Phản hồi thành công là dữ liệu video `video/mp4`. Nếu video chưa tạo xong, API trả về lỗi.
   </LeftColumn>
   <RightColumn>
     <InteractiveApiRequest
       method="GET"
-      apiUrl="https://api.thucchien.ai/gemini/download/v1beta/files/{{video_id}}:download?alt=media"
+      apiUrl="https://api.thucchien.ai/v1/videos/{{video_id}}/content"
       initialParameters={{
         apiKey: '<your_api_key>',
-        video_id: '3j6svp4106e7',
+        video_id: '<video_id>',
       }}
-      headers={{
-        'x-goog-api-key': '<your_api_key>',
-      }}
+      headers={{}}
       parameterControls={{
         apiKey: { type: 'input' },
         video_id: { type: 'input' },
@@ -46,8 +44,8 @@ Khi video đã sẵn sàng, kết quả kiểm tra trạng thái sẽ chứa m�
       codeTemplates={{
         'curl': {
           language: 'bash',
-          template: `curl "https://api.thucchien.ai/gemini/download/v1beta/files/{{video_id}}:download?alt=media" \\
-  -H "x-goog-api-key: {{apiKey}}" \\
+          template: `curl "https://api.thucchien.ai/v1/videos/{{video_id}}/content" \\
+  -H "Authorization: Bearer {{apiKey}}" \\
   --output my_generated_video.mp4`,
         },
       }}

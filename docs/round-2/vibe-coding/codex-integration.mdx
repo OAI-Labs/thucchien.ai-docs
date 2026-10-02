@@ -1,0 +1,95 @@
+---
+sidebar_position: 4
+---
+
+# Tích hợp với Codex
+
+import CodeBlock from '@theme/CodeBlock';
+import CodexStart from '@site/static/img/vibe-coding/codex-start.png';
+import CodexDiff from '@site/static/img/vibe-coding/codex-diff.png';
+
+[Codex](https://learn.chatgpt.com/docs/config-file/config-advanced) là coding agent của OpenAI. Codex CLI, ứng dụng desktop và extension cho VS Code dùng chung một file cấu hình `~/.codex/config.toml`, nên chỉ cần cấu hình một lần.
+
+Codex gọi API theo chuẩn **Responses** (`/v1/responses`). Gateway hỗ trợ chuẩn này cho cả model OpenAI, Gemini và DeepSeek, kể cả khi agent gọi tool.
+
+## 1. Cài đặt
+
+<CodeBlock language="bash">
+{`npm install -g @openai/codex`}
+</CodeBlock>
+
+## 2. Đặt API key vào biến môi trường
+
+Codex đọc key từ biến môi trường, không ghi key vào file cấu hình.
+
+<CodeBlock language="bash">
+{`# macOS / Linux: thêm vào ~/.zshrc hoặc ~/.bashrc
+export THUCCHIEN_API_KEY="<your_api_key>"`}
+</CodeBlock>
+
+<CodeBlock language="powershell">
+{`# Windows PowerShell (lưu vĩnh viễn, mở lại terminal sau khi chạy)
+setx THUCCHIEN_API_KEY "<your_api_key>"`}
+</CodeBlock>
+
+## 3. Khai báo gateway trong `~/.codex/config.toml`
+
+Tạo (hoặc sửa) file `~/.codex/config.toml` (Windows: `%USERPROFILE%\.codex\config.toml`):
+
+<CodeBlock language="toml" title="~/.codex/config.toml">
+{`model = "gpt-6-luna"
+model_provider = "thucchien"
+model_reasoning_effort = "medium"
+
+[model_providers.thucchien]
+name = "AI Thực Chiến"
+base_url = "https://api.thucchien.ai/v1"
+env_key = "THUCCHIEN_API_KEY"
+wire_api = "responses"`}
+</CodeBlock>
+
+- `model_provider` trỏ tới khối `[model_providers.thucchien]`. Không đặt tên provider là `openai`, `ollama` hay `lmstudio` vì đây là tên dành riêng của Codex.
+- `wire_api = "responses"` là giá trị duy nhất Codex còn hỗ trợ.
+- `model_reasoning_effort`: `low`, `medium`, `high` hoặc `xhigh` cho model OpenAI.
+
+## 4. Chạy thử
+
+<CodeBlock language="bash">
+{`cd du-an-cua-ban
+codex`}
+</CodeBlock>
+
+Gõ yêu cầu, ví dụ *"Đọc README và tóm tắt cấu trúc dự án"*. Nếu Codex trả lời và đọc được file, cấu hình đã đúng. Trong ứng dụng desktop và extension VS Code, model `gpt-6-luna` sẽ xuất hiện sẵn vì dùng chung file cấu hình.
+
+<figure style={{ textAlign: 'center' }}>
+  <img src={CodexStart} alt="Codex CLI khởi động với model gpt-6-luna qua gateway" />
+  <figcaption>Khung đầu phiên hiện model <code>gpt-6-luna</code>, nghĩa là Codex đang đi qua gateway.</figcaption>
+</figure>
+
+Khi agent muốn sửa file hoặc chạy lệnh, Codex hiện diff và hỏi trước. Đọc diff rồi mới chọn **Yes, proceed**.
+
+<figure style={{ textAlign: 'center' }}>
+  <img src={CodexDiff} alt="Codex hỏi quyền trước khi áp dụng patch" />
+  <figcaption>Codex đề xuất patch cho <code>todo.py</code> và chờ bạn duyệt.</figcaption>
+</figure>
+
+## Chọn model
+
+| Model | Khi nào dùng |
+|---|---|
+| `gpt-6-luna` | Mặc định: rẻ, nhanh, đủ tốt cho phần lớn tác vụ |
+| `gpt-6.1-sol`, `gpt-6-sol` | Tác vụ khó, refactor lớn |
+| `gemini-3.5-flash` | Ngữ cảnh dài, đọc nhiều file |
+| `deepseek-flash` | Rẻ nhất |
+
+Đổi model ngay trong phiên bằng lệnh `/model`, hoặc khi khởi động: `codex -m gemini-3.5-flash`. Giá từng model xem ở [Bảng giá model](../user-guide/pricing.mdx).
+
+:::tip[Dùng nhiều cấu hình]
+Muốn giữ cả cấu hình ChatGPT cá nhân lẫn gateway, hãy tạo profile: đặt nội dung ở bước 3 vào `~/.codex/thucchien.config.toml` rồi chạy `codex --profile thucchien`. Cấu hình riêng cho một dự án đặt ở `.codex/config.toml` trong thư mục dự án.
+:::
+
+## Xử lý lỗi thường gặp
+
+- **`401`**: sai key, hoặc chưa mở lại terminal sau khi đặt biến môi trường.
+- **`429 Budget has been exceeded`**: đội đã dùng hết budget. Xem [Kiểm tra chi tiêu](../api-reference/spend-checking.mdx).
+- **Codex vẫn yêu cầu đăng nhập ChatGPT**: kiểm tra dòng `model_provider = "thucchien"` nằm ở **đầu file**, trước mọi khối `[...]`.
