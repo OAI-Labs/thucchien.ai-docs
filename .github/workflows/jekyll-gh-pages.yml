@@ -24,7 +24,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           # Docusaurus 3.9 cần Node >= 20
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Install dependencies
