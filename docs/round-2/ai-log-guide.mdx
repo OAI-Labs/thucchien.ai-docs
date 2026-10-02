@@ -8,6 +8,8 @@ sidebar_position: 8.5
 
 Ở vòng Chung khảo, mỗi đội phải **ghi lại quá trình làm việc với công cụ AI** (prompt, các lần AI gọi tool, kết quả, lỗi) và **gửi lên hệ thống của Ban Tổ Chức (BTC)**. BTC cung cấp sẵn bộ hook mẫu `ai-hook-template` cho Claude Code, Cursor, Codex, Gemini CLI, GitHub Copilot và Antigravity: cài một lần, sau đó log được ghi tự động và gửi đi mỗi lần `git push`.
 
+Các đội chỉ được dùng mô hình qua **API Gateway của BTC**; các công cụ trên cần được cấu hình gọi model qua Gateway theo mục [VibeCoding](./vibe-coding/introduction.md).
+
 :::warning[Lưu ý quan trọng]
 **Các bạn có thể sửa script miễn sao đảm bảo push đủ, đúng những event BTC yêu cầu và không có hành vi can thiệp log.**
 
@@ -24,11 +26,9 @@ flowchart TB
         direction LR
         ai["Công cụ AI<br/>Claude Code, Cursor, Codex,<br/>Gemini CLI, Copilot, Antigravity"]
         hook["Hook trong repo<br/>gọi scripts/log_hook.py"]
-        manual["scripts/log_manual.py<br/>ghi tay khi công cụ không có hook"]
         jsonl[(".ai-log/session.jsonl<br/>mỗi event một dòng JSON")]
         ai -- "prompt · gọi tool · kết thúc lượt" --> hook
         hook -- "chuẩn hoá, ghi 1 dòng" --> jsonl
-        manual -- "ghi 1 dòng" --> jsonl
     end
 
     subgraph gui["Chặng 2 · GỬI — mỗi lần git push"]
@@ -168,13 +168,6 @@ Claude Code, Cursor, Gemini CLI, Antigravity có thể hỏi có tin tưởng ho
 | Gemini CLI (`gemini`) | `BeforeAgent` | `AfterTool` | `AfterAgent`, `SessionEnd` |
 | GitHub Copilot (`copilot`) | `userPromptSubmitted` | `postToolUse`, `postToolUseFailure` | `agentStop`, `sessionEnd` |
 | Antigravity (`antigravity`) | `PreInvocation` (hook) và quét transcript khi push | — | — |
-| Công cụ không có hook (ChatGPT web, Gemini web...) | ghi tay bằng `log_manual.py` | — | — |
-
-Ghi tay cho công cụ không có hook:
-
-```bash
-bash scripts/_pyrun.sh scripts/log_manual.py --tool chatgpt --prompt "Mô tả việc đã hỏi"
-```
 
 ### Định dạng một dòng log
 
@@ -228,7 +221,7 @@ Dù sửa gì, kết quả gửi lên vẫn phải **đủ** các event ở [m�
 
 - xoá, sửa hoặc thêm dòng trong `.ai-log/` bằng tay, hay sửa nội dung prompt/output trước khi gửi;
 - bỏ bớt event, tắt hook trong lúc làm, hoặc chỉ gửi một phần log;
-- tạo log giả, sửa thời gian `ts`, hoặc dùng `log_manual.py` ghi những việc không thực sự diễn ra;
+- tạo log giả, sửa thời gian `ts`, hoặc ghi những việc không thực sự diễn ra;
 - gửi log của đội khác hay dùng token của đội khác.
 
 ## 5. Quyền riêng tư
