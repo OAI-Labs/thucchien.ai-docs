@@ -1,14 +1,15 @@
-name: Vercel Preview
+name: Vercel Staging
 
-# Mỗi PR (mở mới hoặc push thêm) được build và deploy một bản preview lên Vercel,
-# link preview được comment vào PR. Production vẫn là GitHub Pages (jekyll-gh-pages.yml).
+# Mỗi PR (mở mới hoặc push thêm) được build và deploy thẳng lên production của
+# project Vercel (https://aithucchien-docs.vercel.app), đóng vai trò staging của docs.
+# Production thật vẫn là GitHub Pages docs.thucchien.ai (jekyll-gh-pages.yml).
 on:
   pull_request:
     types: [opened, synchronize, reopened]
 
-# Push liên tiếp vào cùng một PR thì huỷ bản đang chạy, chỉ giữ bản mới nhất.
+# Mọi PR dùng chung một staging: lần chạy mới huỷ lần đang chạy, bản cuối cùng thắng.
 concurrency:
-  group: vercel-preview-${{ github.event.pull_request.number }}
+  group: vercel-staging
   cancel-in-progress: true
 
 permissions:
@@ -24,7 +25,7 @@ env:
 
 jobs:
   deploy:
-    name: Deploy preview
+    name: Deploy staging
     # PR từ fork không có quyền đọc secret nên bỏ qua.
     if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
@@ -47,16 +48,16 @@ jobs:
         run: npm install --global vercel@latest
 
       - name: Pull Vercel project settings
-        run: vercel pull --yes --environment=preview
+        run: vercel pull --yes --environment=production
       - name: Build
-        run: vercel build
+        run: vercel build --prod
       - name: Deploy
         id: deploy
         run: |
-          url=$(vercel deploy --prebuilt)
+          url=$(vercel deploy --prebuilt --prod)
           echo "url=$url" >> "$GITHUB_OUTPUT"
 
-      - name: Comment preview URL
+      - name: Comment staging URL
         env:
           GH_TOKEN: ${{ github.token }}
           PR: ${{ github.event.pull_request.number }}
@@ -64,4 +65,4 @@ jobs:
           SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           gh pr comment "$PR" --repo "$GITHUB_REPOSITORY" --edit-last --create-if-none \
-            --body "**Vercel preview:** $URL (commit \`${SHA:0:7}\`)"
+            --body "**Vercel staging:** https://aithucchien-docs.vercel.app (deployment $URL, commit \`${SHA:0:7}\`)"
