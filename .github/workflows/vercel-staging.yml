@@ -1,0 +1,68 @@
+name: Vercel Staging
+
+# Mỗi PR (mở mới hoặc push thêm) được build và deploy thẳng lên production của
+# project Vercel (https://aithucchien-docs.vercel.app), đóng vai trò staging của docs.
+# Production thật vẫn là GitHub Pages docs.thucchien.ai (jekyll-gh-pages.yml).
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+# Mọi PR dùng chung một staging: lần chạy mới huỷ lần đang chạy, bản cuối cùng thắng.
+concurrency:
+  group: vercel-staging
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+env:
+  # ID không phải bí mật (lấy từ .vercel/project.json); chỉ VERCEL_TOKEN là secret.
+  VERCEL_ORG_ID: team_1FIzrhd7H64Ls6tNSRFZexJ2
+  VERCEL_PROJECT_ID: prj_C2dvZdCpFs7HgWRPPkPyywMNAUd6
+  # Vercel CLI tự đọc biến này, không cần truyền --token.
+  VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+
+jobs:
+  deploy:
+    name: Deploy staging
+    # PR từ fork không có quyền đọc secret nên bỏ qua.
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check VERCEL_TOKEN
+        run: |
+          if [ -z "$VERCEL_TOKEN" ]; then
+            echo "::error::Secret VERCEL_TOKEN trống hoặc chưa được thêm vào repo."
+            exit 1
+          fi
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel project settings
+        run: vercel pull --yes --environment=production
+      - name: Build
+        run: vercel build --prod
+      - name: Deploy
+        id: deploy
+        run: |
+          url=$(vercel deploy --prebuilt --prod)
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
+      - name: Comment staging URL
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          URL: ${{ steps.deploy.outputs.url }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          gh pr comment "$PR" --repo "$GITHUB_REPOSITORY" --edit-last --create-if-none \
+            --body "**Vercel staging:** https://aithucchien-docs.vercel.app (deployment $URL, commit \`${SHA:0:7}\`)"
