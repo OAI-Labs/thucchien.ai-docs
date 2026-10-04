@@ -16,6 +16,7 @@ export const KeyInfoPreview = ({ data, apiKey }) => {
   const info = data?.info;
   const teamId = info?.team_id;
   const [team, setTeam] = useState(null);
+  const [models, setModels] = useState(null);
 
   // Budget, RPM, TPM được đặt ở team (dùng chung cho mọi key của đội), nên lấy thêm /team/info.
   useEffect(() => {
@@ -29,12 +30,29 @@ export const KeyInfoPreview = ({ data, apiKey }) => {
       .catch(() => setTeam(null));
   }, [teamId, apiKey]);
 
+  // Key của đội dùng nhóm model "contestant-models", nên info.models rỗng. /v1/models trả đúng danh sách key gọi được.
+  useEffect(() => {
+    setModels(null);
+    if (!info || !apiKey) return;
+    fetch('https://api.thucchien.ai/v1/models', {
+      headers: { accept: 'application/json', Authorization: `Bearer ${apiKey}` },
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json) => setModels(json?.data?.map((m) => m.id).sort() || null))
+      .catch(() => setModels(null));
+  }, [info, apiKey]);
+
   if (!info) return null;
 
   const spend = team?.spend ?? info.spend ?? 0;
   const maxBudget = team?.max_budget ?? info.max_budget;
   const tpmLimit = team?.tpm_limit ?? info.tpm_limit;
   const rpmLimit = team?.rpm_limit ?? info.rpm_limit;
+  const modelTpm = team?.metadata?.model_tpm_limit || {};
+  const modelRpm = team?.metadata?.model_rpm_limit || {};
+  const limitedFirst = (models || []).slice().sort(
+    (a, b) => (modelTpm[b] || modelRpm[b] ? 1 : 0) - (modelTpm[a] || modelRpm[a] ? 1 : 0)
+  );
   const budgetPercentage = maxBudget ? Math.min((spend / maxBudget) * 100, 100) : 0;
 
   const getProgressBarColor = () => {
@@ -116,10 +134,33 @@ export const KeyInfoPreview = ({ data, apiKey }) => {
         <div className={styles.infoRow}>
           <span className={styles.infoLabel}>Models:</span>
           <span className={styles.infoValue}>
-            {info.models?.join(', ') || 'N/A'}
+            {models ? `${models.length} model` : info.models?.join(', ') || 'N/A'}
           </span>
         </div>
       </div>
+
+      {models && (
+        <details className={styles.modelLimits} open>
+          <summary>Giới hạn từng model</summary>
+          <table>
+            <thead>
+              <tr><th>Model</th><th>TPM</th><th>RPM</th></tr>
+            </thead>
+            <tbody>
+              {limitedFirst.map((m) => (
+                <tr key={m}>
+                  <td><code>{m}</code></td>
+                  <td>{modelTpm[m] ? modelTpm[m].toLocaleString() : '—'}</td>
+                  <td>{modelRpm[m] ? modelRpm[m].toLocaleString() : '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div className={styles.modelLimitsNote}>
+            — : chỉ chịu giới hạn chung của đội. Xem <a href="/docs/round-2/user-guide/rate-limits">Giới hạn tốc độ</a>.
+          </div>
+        </details>
+      )}
     </div>
   );
 };
@@ -131,7 +172,7 @@ export const KeyInfoPreview = ({ data, apiKey }) => {
 Lấy thông tin chi tiết về API key và mức độ sử dụng hiện tại.
 
 :::info Budget tính theo đội
-Budget, RPM và TPM được đặt cho **đội** (team), dùng chung cho mọi key của đội. Vì vậy trong `/key/info`, `max_budget`, `rpm_limit`, `tpm_limit` là `null` và `spend` chỉ là phần chi tiêu của riêng key đó.
+Budget, RPM, TPM và giới hạn từng model được đặt cho **đội** (team), dùng chung cho mọi key của đội. Vì vậy trong `/key/info`, `max_budget`, `rpm_limit`, `tpm_limit` là `null`, `metadata` không có giới hạn từng model, và `spend` chỉ là phần chi tiêu của riêng key đó.
 
 Để xem tổng chi tiêu và budget của đội, gọi `/team/info` với `team_id` lấy từ `/key/info` (chỉ xem được đội của chính mình). Khung kết quả bên phải đã tự gọi thêm endpoint này.
 
@@ -139,7 +180,7 @@ Budget, RPM và TPM được đặt cho **đội** (team), dùng chung cho mọi
 curl 'https://api.thucchien.ai/team/info?team_id=<team_id>'   -H 'Authorization: Bearer <your_api_key>'
 ```
 
-Trong phản hồi, xem `team_info.spend`, `team_info.max_budget`, `team_info.rpm_limit`, `team_info.tpm_limit`.
+Trong phản hồi, xem `team_info.spend`, `team_info.max_budget`, `team_info.rpm_limit`, `team_info.tpm_limit`, và giới hạn từng model ở `team_info.metadata.model_tpm_limit` / `team_info.metadata.model_rpm_limit`. Danh sách model key gọi được: `GET /v1/models`. Giải thích các giới hạn: [Giới hạn tốc độ](../user-guide/rate-limits.mdx).
 :::
 
 <ApiReferenceLayout>
@@ -189,10 +230,10 @@ Trong phản hồi, xem `team_info.spend`, `team_info.max_budget`, `team_info.rp
       Metadata tùy chỉnh được gán cho API key.
     </ApiParameter>
     <ApiParameter name="metadata.model_rpm_limit" type="object" indent={3}>
-      Giới hạn số lượng request per minute (RPM) cho từng mô hình cụ thể. Đây là giới hạn tần suất gọi API theo phút cho mỗi model. Xem thêm [Agent Platform quotas](https://cloud.google.com/vertex-ai/generative-ai/docs/quotas) để biết chi tiết về các giới hạn.
+      Giới hạn request per minute (RPM) cho từng model. Với key của đội, giới hạn này nằm ở `team_info.metadata.model_rpm_limit` của `/team/info`, không nằm trên key.
     </ApiParameter>
     <ApiParameter name="metadata.model_tpm_limit" type="object" indent={3}>
-      Giới hạn số lượng token per minute (TPM) cho từng mô hình cụ thể. Đây là tổng số token (input) có thể xử lý trong một phút cho mỗi model. Xem thêm [Agent Platform quotas](https://cloud.google.com/vertex-ai/generative-ai/docs/quotas) để biết chi tiết về quota và giới hạn token.
+      Giới hạn token per minute (TPM, input + output) cho từng model. Với key của đội, giới hạn này nằm ở `team_info.metadata.model_tpm_limit` của `/team/info`, không nằm trên key.
     </ApiParameter>
     <ApiParameter name="tpm_limit" type="number" indent={2}>
       Giới hạn tokens per minute chung cho API Key. `null` nếu không giới hạn.
@@ -204,7 +245,7 @@ Trong phản hồi, xem `team_info.spend`, `team_info.max_budget`, `team_info.rp
       Thời gian hết hạn của API key. `null` nếu không hết hạn.
     </ApiParameter>
     <ApiParameter name="models" type="array" indent={2}>
-      Danh sách các mô hình được phép sử dụng với API key này.
+      Danh sách model gán riêng cho key. Rỗng với key của đội (key dùng nhóm model của đội). Gọi `GET /v1/models` để xem model key gọi được.
     </ApiParameter>
     <ApiParameter name="user_id" type="string" indent={2}>
       ID của người dùng sở hữu API key.

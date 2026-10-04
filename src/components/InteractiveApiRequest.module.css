@@ -347,3 +347,37 @@
     color: #f85149;
   }
 
+
+  /* Bảng giới hạn từng model trong KeyInfoPreview */
+  .modelLimits {
+    margin-top: 1rem;
+    font-size: 0.8125rem;
+  }
+
+  .modelLimits summary {
+    cursor: pointer;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+
+  .modelLimits table {
+    display: table;
+    width: 100%;
+    margin: 0;
+  }
+
+  .modelLimits th,
+  .modelLimits td {
+    padding: 0.25rem 0.5rem;
+  }
+
+  .modelLimits td:not(:first-child),
+  .modelLimits th:not(:first-child) {
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .modelLimitsNote {
+    margin-top: 0.5rem;
+    color: var(--ifm-color-emphasis-700);
+  }
