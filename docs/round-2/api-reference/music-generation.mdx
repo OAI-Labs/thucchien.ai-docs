@@ -15,8 +15,8 @@ import Badge from '@site/src/components/Badge';
 ## <Badge method="POST" /> `/audio/speech`
 
 Sinh một bản nhạc từ mô tả bằng chữ. Dùng chung endpoint với Text-to-Speech, khác ở tên model.
-:::info[Chỉ mở cho bảng 4, 5, 6, 7]
-Chỉ key chính thức của các đội bảng 4, 5, 6, 7 gọi được Lyria. Hướng dẫn chi tiết: [Sinh nhạc với Lyria 3](../user-guide/music-generation-lyria.mdx).
+:::info[Tham khảo]
+Hướng dẫn chi tiết và cách viết prompt: [Sinh nhạc với Lyria 3](../user-guide/music-generation-lyria.mdx). Tài liệu gốc: [Lyria 3 (Google)](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/lyria/lyria-3).
 :::
 
 <ApiReferenceLayout>
@@ -27,7 +27,7 @@ Chỉ key chính thức của các đội bảng 4, 5, 6, 7 gọi được Lyria
       `lyria-3-clip-preview` (bài khoảng 30 giây, $0.04) hoặc `lyria-3-pro-preview` (bài khoảng 3 phút, $0.08).
     </ApiParameter>
     <ApiParameter name="input" type="string" required>
-      Mô tả bản nhạc: thể loại, tâm trạng, nhạc cụ, nhịp độ.
+      Mô tả bản nhạc: thể loại, tâm trạng, nhạc cụ, nhịp độ, giọng hát, lời bài hát.
     </ApiParameter>
     <ApiParameter name="voice" type="string" required>
       Lyria không dùng giọng đọc. Gửi `default`.
@@ -44,9 +44,6 @@ Chỉ key chính thức của các đội bảng 4, 5, 6, 7 gọi được Lyria
 
     ### Lỗi thường gặp
 
-    <ApiParameter name="403" type="key_model_access_denied">
-      Đội của key không thuộc bảng 4, 5, 6, 7.
-    </ApiParameter>
     <ApiParameter name="429" type="rate limit" isEnd>
       Vượt 105 request/phút của model đó, hoặc hết budget.
     </ApiParameter>

@@ -10,10 +10,6 @@ import CodeBlock from '@theme/CodeBlock';
 
 Lyria 3 của Google sinh một bản nhạc từ mô tả bằng chữ (prompt). Gateway trả về file MP3 qua cùng endpoint với [Text-to-Speech](./text-to-speech.mdx).
 
-:::info[Chỉ mở cho bảng 4, 5, 6, 7]
-Lyria chỉ gọi được bằng key chính thức của các đội thuộc **bảng 4, 5, 6 và 7**. Đội khác gọi sẽ nhận lỗi `403`.
-:::
-
 **Các model được hỗ trợ** (Gemini Enterprise Agent Platform (trước đây là Vertex AI)):
 
 | Model | Độ dài bài | Thời gian chờ | Định dạng | Giá |
@@ -101,6 +97,22 @@ response.write_to_file("song.mp3")`}
 
 Gateway bỏ qua `speed` và `instructions` với Lyria vì model không hỗ trợ. Request vẫn thành công nhưng hai tham số này không có tác dụng.
 
+## Viết prompt
+
+Theo hướng dẫn của Google, prompt nên mô tả lần lượt: **thể loại và phong cách**, **tâm trạng**, **nhạc cụ**, **nhịp độ** (có thể ghi BPM, ví dụ `120 BPM`), **giọng hát và ngôn ngữ**, rồi tới **lời bài hát**.
+
+- **Lời bài hát:** nêu chủ đề để model tự viết lời, hoặc ghi `Lyrics:` rồi viết đúng lời bạn muốn model hát.
+- **Cấu trúc bài** (`lyria-3-pro-preview`): yêu cầu intro, verse, chorus, bridge để có một bài hoàn chỉnh.
+- **Nhạc không lời:** ghi rõ "instrumental, no vocals".
+
+Ví dụ:
+
+```text
+Upbeat Vietnamese pop, cheerful and hopeful, acoustic guitar, piano and light drums, 110 BPM,
+female vocals in Vietnamese. Song about a team building their first AI product together.
+Structure: intro, verse, chorus, verse, chorus, outro.
+```
+
 ## Lưu ý
 
 - Mỗi request sinh một bài. Muốn có nhiều phương án thì gửi nhiều request, mỗi request tính tiền riêng.
@@ -109,3 +121,12 @@ Gateway bỏ qua `speed` và `instructions` với Lyria vì model không hỗ tr
 - Đặt timeout đủ dài (ít nhất 2 phút) cho bản pro, nếu không client sẽ ngắt trước khi có kết quả.
 
 Tham chiếu đầy đủ: [API sinh nhạc](../api-reference/music-generation.mdx).
+
+## Tài liệu tham khảo của Google
+
+- [Lyria 3: trang model trên Gemini Enterprise Agent Platform](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/lyria/lyria-3)
+- [Hướng dẫn viết prompt sinh nhạc Lyria](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/music/music-gen-prompt-guide)
+- [Ultimate prompting guide for Lyria 3 Pro (Google Cloud Blog)](https://cloud.google.com/blog/products/ai-machine-learning/ultimate-prompting-guide-for-lyria-3-pro)
+- [How to create effective prompts with Lyria (Google DeepMind)](https://deepmind.google/models/lyria/prompt-guide/)
+- [Giới thiệu Lyria 3 và Lyria 3 Pro trên Vertex AI](https://cloud.google.com/blog/products/ai-machine-learning/lyria-3-and-lyria-3-pro-on-vertex-ai)
+- [Bảng giá Lyria](https://cloud.google.com/gemini-enterprise-agent-platform/generative-ai/pricing#lyria)
