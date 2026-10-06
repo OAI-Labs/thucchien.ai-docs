@@ -1,0 +1,109 @@
+---
+sidebar_position: 7.5
+title: Sinh nhạc
+description: Sinh bản nhạc MP3 từ mô tả bằng chữ với Lyria 3.
+hide_table_of_contents: true
+---
+
+import ApiReferenceLayout, { LeftColumn, RightColumn } from '@site/src/components/ApiReferenceLayout';
+import InteractiveApiRequest from '@site/src/components/InteractiveApiRequest';
+import ApiParameter from '@site/src/components/ApiParameter';
+import Badge from '@site/src/components/Badge';
+
+# Sinh nhạc (Lyria 3)
+
+## <Badge method="POST" /> `/audio/speech`
+
+Sinh một bản nhạc từ mô tả bằng chữ. Dùng chung endpoint với Text-to-Speech, khác ở tên model.
+:::info[Tham khảo]
+Hướng dẫn chi tiết và cách viết prompt: [Sinh nhạc với Lyria 3](../user-guide/music-generation-lyria.mdx). Tài liệu gốc: [Lyria 3 (Google)](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/lyria/lyria-3).
+:::
+
+<ApiReferenceLayout>
+  <LeftColumn>
+    ### Cấu trúc yêu cầu (Request Body)
+
+    <ApiParameter name="model" type="string" required>
+      `lyria-3-clip-preview` (bài khoảng 30 giây, $0.04) hoặc `lyria-3-pro-preview` (bài khoảng 3 phút, $0.08).
+    </ApiParameter>
+    <ApiParameter name="input" type="string" required>
+      Mô tả bản nhạc: thể loại, tâm trạng, nhạc cụ, nhịp độ, giọng hát, lời bài hát.
+    </ApiParameter>
+    <ApiParameter name="voice" type="string" required>
+      Lyria không dùng giọng đọc. Gửi `default`.
+    </ApiParameter>
+    <ApiParameter name="response_format" type="string" isEnd>
+      `mp3` (mặc định). Riêng `lyria-3-pro-preview` nhận thêm `wav`.
+    </ApiParameter>
+
+    ---
+
+    ### Cấu trúc Phản hồi (Response Body)
+
+    Phản hồi thành công trả về file âm thanh (`audio/mpeg`). Header `x-litellm-response-cost` cho biết chi phí của request.
+
+    ### Lỗi thường gặp
+
+    <ApiParameter name="429" type="rate limit" isEnd>
+      Vượt 105 request/phút của model đó, hoặc hết budget.
+    </ApiParameter>
+
+  </LeftColumn>
+  <RightColumn>
+    <InteractiveApiRequest
+      apiUrl="https://api.thucchien.ai/audio/speech"
+      initialParameters={{
+        apiKey: '<your_api_key>',
+        model: 'lyria-3-clip-preview',
+        input: 'Nhạc lo-fi thư giãn, piano và tiếng mưa nhẹ, nhịp chậm',
+      }}
+      parameterControls={{
+        apiKey: { type: 'input' },
+        model: { type: 'select', options: ['lyria-3-clip-preview', 'lyria-3-pro-preview'] },
+        input: { type: 'textarea' },
+      }}
+      codeTemplates={{
+        'curl': {
+          language: 'bash',
+          template: `curl https://api.thucchien.ai/audio/speech \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer {{apiKey}}" \\
+  -d '{
+    "model": "{{model}}",
+    "input": "{{input}}",
+    "voice": "default"
+  }' \\
+  --output song.mp3`,
+        },
+        'Python (openai)': {
+          language: 'python',
+          template: `from openai import OpenAI
+
+client = OpenAI(
+    api_key="{{apiKey}}",
+    base_url="https://api.thucchien.ai",
+)
+
+response = client.audio.speech.create(
+    model="{{model}}",
+    voice="default",
+    input="{{input}}",
+)
+
+response.write_to_file("song.mp3")`,
+        },
+      }}
+      buildBody={(params) => ({
+        model: params.model,
+        input: params.input,
+        voice: 'default',
+      })}
+      isAudioResponse={true}
+      exampleResponse={{
+        "status": 200,
+        "contentType": "audio/mpeg",
+        "message": "Response body contains the MP3 file."
+      }}
+    />
+  </RightColumn>
+</ApiReferenceLayout>
