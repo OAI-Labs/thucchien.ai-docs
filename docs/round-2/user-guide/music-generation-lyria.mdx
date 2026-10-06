@@ -1,0 +1,111 @@
+---
+sidebar_position: 6.5
+---
+
+# Sinh nhạc với Lyria 3
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import CodeBlock from '@theme/CodeBlock';
+
+Lyria 3 của Google sinh một bản nhạc từ mô tả bằng chữ (prompt). Gateway trả về file MP3 qua cùng endpoint với [Text-to-Speech](./text-to-speech.mdx).
+
+:::info[Chỉ mở cho bảng 4, 5, 6, 7]
+Lyria chỉ gọi được bằng key chính thức của các đội thuộc **bảng 4, 5, 6 và 7**. Đội khác gọi sẽ nhận lỗi `403`.
+:::
+
+**Các model được hỗ trợ** (Gemini Enterprise Agent Platform (trước đây là Vertex AI)):
+
+| Model | Độ dài bài | Thời gian chờ | Định dạng | Giá |
+|---|---|---|---|---:|
+| `lyria-3-clip-preview` | khoảng 30 giây | khoảng 15 giây | `mp3` | $0.04 / bài |
+| `lyria-3-pro-preview` | khoảng 3 phút | khoảng 1 phút | `mp3`, `wav` | $0.08 / bài |
+
+**Endpoint:** `POST /audio/speech`
+
+:::tip[Thử prompt bằng bản clip]
+Dùng `lyria-3-clip-preview` để thử prompt vì rẻ hơn và nhanh hơn. Chỉ chuyển sang `lyria-3-pro-preview` khi cần cả bài dài.
+:::
+
+<Tabs>
+  <TabItem value="curl" label="curl">
+    <CodeBlock language="bash">
+    {`curl https://api.thucchien.ai/audio/speech \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer <your_api_key>" \\
+  -d '{
+    "model": "lyria-3-clip-preview",
+    "input": "Nhạc lo-fi thư giãn, piano và tiếng mưa nhẹ, nhịp chậm",
+    "voice": "default"
+  }' \\
+  --output song.mp3`}
+    </CodeBlock>
+  </TabItem>
+  <TabItem value="python-requests" label="Python (requests)">
+    <CodeBlock language="python">
+    {`import requests
+
+# --- Cấu hình ---
+AI_API_BASE = "https://api.thucchien.ai"
+AI_API_KEY = "sk-1234" # Thay bằng API key của bạn
+
+# --- Thực thi ---
+response = requests.post(
+    f"{AI_API_BASE}/audio/speech",
+    headers={"Authorization": f"Bearer {AI_API_KEY}"},
+    json={
+        "model": "lyria-3-pro-preview",
+        "input": "Bản nhạc pop sôi động cho video giới thiệu sản phẩm, guitar điện và trống",
+        "voice": "default",
+    },
+    timeout=300,  # bản pro mất khoảng 1 phút
+)
+
+if response.status_code == 200:
+    with open("song.mp3", "wb") as f:
+        f.write(response.content)
+    print("Chi phí:", response.headers.get("x-litellm-response-cost"))
+else:
+    print(f"Error: {response.status_code}")
+    print(response.text)`}
+    </CodeBlock>
+  </TabItem>
+  <TabItem value="python-openai" label="Python (openai)">
+    <CodeBlock language="python">
+    {`from openai import OpenAI
+
+client = OpenAI(
+    api_key="sk-1234", # Thay bằng API key của bạn
+    base_url="https://api.thucchien.ai",
+)
+
+response = client.audio.speech.create(
+    model="lyria-3-clip-preview",
+    voice="default",
+    input="Nhạc nền cinematic hùng tráng, dàn dây và kèn đồng",
+)
+
+response.write_to_file("song.mp3")`}
+    </CodeBlock>
+  </TabItem>
+</Tabs>
+
+## Tham số
+
+| Tham số | Bắt buộc | Ý nghĩa |
+|---|---|---|
+| `model` | có | `lyria-3-clip-preview` hoặc `lyria-3-pro-preview` |
+| `input` | có | Mô tả bản nhạc: thể loại, tâm trạng, nhạc cụ, nhịp độ |
+| `voice` | có | Lyria không dùng giọng đọc. Gửi `"default"` vì thư viện `openai` bắt buộc trường này |
+| `response_format` | không | `mp3` (mặc định). Riêng `lyria-3-pro-preview` nhận thêm `wav` |
+
+Gateway bỏ qua `speed` và `instructions` với Lyria vì model không hỗ trợ. Request vẫn thành công nhưng hai tham số này không có tác dụng.
+
+## Lưu ý
+
+- Mỗi request sinh một bài. Muốn có nhiều phương án thì gửi nhiều request, mỗi request tính tiền riêng.
+- Bài nhạc tính tiền theo bài, không theo độ dài prompt. Xem chi phí thực của từng request ở header `x-litellm-response-cost`.
+- Giới hạn tốc độ: 105 request/phút mỗi model cho mỗi đội. Xem [Giới hạn tốc độ](./rate-limits.mdx).
+- Đặt timeout đủ dài (ít nhất 2 phút) cho bản pro, nếu không client sẽ ngắt trước khi có kết quả.
+
+Tham chiếu đầy đủ: [API sinh nhạc](../api-reference/music-generation.mdx).
